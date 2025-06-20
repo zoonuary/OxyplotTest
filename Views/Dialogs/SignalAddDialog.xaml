@@ -1,0 +1,83 @@
+﻿<dx:ThemedWindow
+    x:Class="OxyTest.Views.Dialogs.SignalAddDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+	xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+	xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+	
+    Title="" Height="600" Width="800"
+    KeyDown="ThemedWindow_KeyDown"
+	>
+
+	<dxmvvm:Interaction.Behaviors>
+		<dxmvvm:EventToCommand EventName="Loaded" Command="{Binding Loaded}"/>
+		<dxmvvm:EventToCommand EventName="Closed" Command="{Binding Closed}"/>
+	</dxmvvm:Interaction.Behaviors>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+
+		<dxg:TreeViewControl />
+
+		<dxg:TreeListControl Grid.Row="0" x:Name="TreeList" SelectionMode="Row"
+							 ItemsSource="{Binding TreeNodeCollections}"
+							 SelectedItem="{Binding SelectedItem}"
+							 MouseLeftButtonDown="TreeList_MouseLeftButtonDown"
+							 MouseRightButtonDown="TreeList_MouseRightButtonDown"
+							 >
+			<dxmvvm:Interaction.Behaviors>
+				<dxmvvm:EventToCommand EventName="MouseDoubleClick" PassEventArgsToCommand="False" Command="{Binding CMD_TreeListDoubleClick}"
+									   CommandParameter="{Binding Path=SelectedItem, RelativeSource={RelativeSource AncestorType=dxg:TreeListControl}}"/>
+			</dxmvvm:Interaction.Behaviors>
+
+			<dxg:TreeListControl.Columns>
+				<dxg:TreeListColumn FieldName="Name" Header="dbc / message / signal" BestFitMode="Smart" AllowEditing="False"/>
+				<dxg:TreeListColumn FieldName="ID" Header="ID" BestFitMode="Smart" AllowEditing="False"/>
+				<dxg:TreeListColumn FieldName="Transmitter" Header="TxNode" BestFitMode="Smart" AllowEditing="False"/>
+				<dxg:TreeListColumn FieldName="Comment" Header="Comment" BestFitMode="Smart" AllowEditing="False"/>
+			</dxg:TreeListControl.Columns>
+
+			<dxg:TreeListControl.View>
+				<dxg:TreeListView 
+					AutoWidth="True" ShowIndicator="False"
+					TreeDerivationMode="ChildNodesSelector" ChildNodesPath="Children"/>
+			</dxg:TreeListControl.View>
+		</dxg:TreeListControl>
+		<StackPanel Grid.Row="1"
+					Orientation="Horizontal"
+					HorizontalAlignment="Right"
+					Margin="10" Height="Auto">
+
+			<dx:SimpleButton Content="Append" Margin="0,0,10,0" Width="75" Height="30" Command="{Binding CMD_Append}"
+							 CommandParameter="{Binding ElementName=TreeList}">
+				<dx:SimpleButton.Style>
+					<Style TargetType="dx:SimpleButton">
+						<Style.Triggers>
+							<Trigger Property="IsFocused" Value="True">
+								<Setter Property="BorderThickness" Value="2"/>
+							</Trigger>
+						</Style.Triggers>
+					</Style>
+				</dx:SimpleButton.Style>
+			</dx:SimpleButton>
+
+			<dx:SimpleButton Content="OK" Width="75" Height="30" Command="{Binding CMD_OK}">
+				<dx:SimpleButton.Style>
+					<Style TargetType="dx:SimpleButton">
+						<Style.Triggers>
+							<Trigger Property="IsFocused" Value="True">
+								<Setter Property="BorderThickness" Value="2"/>
+							</Trigger>
+						</Style.Triggers>
+					</Style>
+				</dx:SimpleButton.Style>
+			</dx:SimpleButton>
+
+		</StackPanel>
+
+	</Grid>
+</dx:ThemedWindow>
