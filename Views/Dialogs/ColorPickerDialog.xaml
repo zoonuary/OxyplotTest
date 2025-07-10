@@ -8,8 +8,9 @@
 	WindowStartupLocation="Manual"
 	WindowStyle="ToolWindow"
 	SizeToContent="WidthAndHeight"
+	
     >
-	<StackPanel>
+	<StackPanel Margin="0">
 		<dxe:ColorEdit x:Name="ColorEditControl"/>
 		<Grid>
 			<Grid.ColumnDefinitions>

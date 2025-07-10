@@ -59,11 +59,12 @@ namespace OxyTest.Models.Graph
 				if(visible != value)
 				{
 					visible = value;
-					NotifyPropertyChanged("Visible");
+					NotifyPropertyChanged(nameof(Visible));
 				}
 			}
 		}
 
+		//basecolor가 바뀌면 plot color, axis color 전부 바뀌어야함.
 		private Color baseColor;
 		public Color BaseColor
 		{
@@ -73,7 +74,7 @@ namespace OxyTest.Models.Graph
 				if(baseColor != value)
 				{
 					baseColor = value;
-					NotifyPropertyChanged("BaseColor");
+					NotifyPropertyChanged(nameof(BaseColor));
 				}
 			}
 		}
