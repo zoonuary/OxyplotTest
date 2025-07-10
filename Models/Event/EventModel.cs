@@ -22,8 +22,9 @@ namespace OxyTest.Models.Event
 			DLC = dlc;
 			Data = data;
 
-			double timeSec = Math.Floor((double)(timestamp * 1e-9) * 1e6) / 1e6; //소숫점 아래 9자리까지 계산, 6자리까지 자름
-			TimeStamp = DateTime.MinValue.AddSeconds(timeSec);
+			TimeStamp = Math.Floor((double)(timestamp * 1e-9) * 1e6) / 1e6;
+			//double timeSec = Math.Floor((double)(timestamp * 1e-9) * 1e6) / 1e6; //소숫점 아래 9자리까지 계산, 6자리까지 자름
+			//TimeStamp = DateTime.MinValue.AddSeconds(timeSec);
 			//TimeStamp = new DateTime((long)(timestamp / 100));
 			IsExtended = SetData(type);
 		}
@@ -66,7 +67,9 @@ namespace OxyTest.Models.Event
 		public uint ID { get; }
 		public byte DLC { get; }
 		public byte[] Data { get; set; }
-		public DateTime TimeStamp { get; }
+		//public DateTime TimeStamp { get; } => oxyplot에서 요구하는 timestamp가 double형태임으로 그에 맞춰 변경
+		public double TimeStamp { get; }
+		
 		public bool IsExtended { get; }
 		public bool IsValidMessage { get; }
 	}

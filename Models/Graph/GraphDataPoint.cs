@@ -8,7 +8,7 @@ namespace OxyTest.Models.Graph
 {
 	public class GraphDataPoint
 	{
-		public DateTime X { get; set; }
+		public double X { get; set; }
 		public double Y { get; set; }
 		public double? Size { get; set; } //scatter
 		public int? CategoryIndex { get; set; } //bar

@@ -18,7 +18,6 @@ namespace OxyTest.ViewModels
 			GraphCore = graphCore;
 
 			PlotModel = new PlotModel();
-			GridViewModel = new GridViewModel(GraphCore);
 
 
 			var axis = new DateTimeAxis
@@ -50,7 +49,6 @@ namespace OxyTest.ViewModels
 		//임시, view에 들어갈 plotModel
 		public PlotModel PlotModel { get; }
 
-		public GridViewModel GridViewModel { get; }
 
 
 		public void OpenSignalAddDialog()
@@ -60,10 +58,10 @@ namespace OxyTest.ViewModels
 
 		private void OnSignalAdded(GraphModel model)
 		{
-			GraphCore.GraphData.Graphs.Add(model);
+			GraphCore.GraphData.AddGraph(model);
+			//GraphCore.GraphData.Graphs.Add(model);
 
 
-			//현재 model에 이미 signal 정보는 있는 상태임. 
 			//아래 주석은 추가로 graph를 그릴 때 필요한 property를 커스텀해서 추가하던 코드.
 
 

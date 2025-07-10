@@ -5,30 +5,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace OxyTest.Composition
 {
 	public class GraphCore
 	{
+		public Visual MainVisual { get; }
+
 		public GraphData GraphData { get; }
 		public GraphProcessor GraphProcessor { get; }
 		public DialogService DialogService { get; }
 		public PageNavigationService NavigationService { get; }
-		public GraphCore()
+
+		public GraphCore(Visual visual)
 		{
+			MainVisual = visual;
+
 			GraphData = new GraphData();
 			GraphProcessor = new GraphProcessor(GraphData);
-			DialogService = new DialogService();
+			DialogService = new DialogService(MainVisual);
 			NavigationService = new PageNavigationService(this);
-		}
-
-		/// <summary>
-		/// winform에서 호출되길 기대하는 dll 임으로, winform을 호출한 elementhost의 handle을 필요한 class들에 넣어주는 함수
-		/// </summary>
-		/// <param name="hwnd">winform handle</param>
-		public void InitializeWithHandle(IntPtr hwnd)
-		{
-			DialogService.Init(hwnd);
 		}
 
 		/// <summary>

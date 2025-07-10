@@ -3,6 +3,7 @@ using OxyTest.Composition;
 using OxyTest.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -22,32 +23,51 @@ namespace OxyTest.Views
 	/// </summary>
 	public partial class GraphView : UserControl
 	{
+		private static readonly ResourceDictionary dictionary = new ResourceDictionary
+		{
+			Source = new Uri("pack://application:,,,/OxyTest;component/Themes/Converters.xaml")
+		};
+
 		public GraphView()
 		{
+			var core = new GraphCore(this); //모듈에 필요한 주요 클래스 전부 로드
+			Resources.MergedDictionaries.Add(dictionary); //resource dictionary 추가.
+
 			InitializeComponent();
-			var core = new GraphCore();
 			DataContext = new GraphViewModel(core);
 
-			Initialize_GraphPlotArea(core);
+			Initialize_GridViewContainer(core);
+			Initialize_GraphPlotContainer(core);
 
-
-			Loaded += (s, e) =>
-			{
-				//============================== parent winform의 handle을 가져오고, core에 세팅.
-				var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
-				if(hwndSource != null)
-				{
-					var elementHost = System.Windows.Forms.Control.FromChildHandle(hwndSource.Handle);
-					var winformHandle = elementHost?.FindForm()?.Handle ?? IntPtr.Zero;
-					core.InitializeWithHandle(winformHandle);
-				}
-			};
+			//Loaded += (s, e) =>
+			//{
+			// // popup될 때마다 handle을 가져오도록 변경. 부모 window가 docking system임.
+			//	//============================== parent winform의 handle을 가져오고, core에 세팅.
+			//	var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
+			//	if(hwndSource != null)
+			//	{
+			//		var elementHost = System.Windows.Forms.Control.FromChildHandle(hwndSource.Handle);
+			//		var winformHandle = elementHost?.FindForm()?.Handle ?? IntPtr.Zero;
+			//		core.InitializeWithHandle(winformHandle);
+			//	}
+			//};
 		}
 
-		private void Initialize_GraphPlotArea(GraphCore core)
+		//Graph plot 내부 NavigationFrame 초기화 및 초기 화면(SINGLE_Y)으로 로드
+		private void Initialize_GraphPlotContainer(GraphCore core)
 		{
-			GraphPlotArea.Children.Add(core.NavigationService.NavigationFrame);
+			GraphPlotContainer.Children.Add(core.NavigationService.NavigationFrame);
 			core.NavigationService.Navigate(ePAGE_TYPE.SINGLE_Y);
+		}
+
+		//Gridview 생성 및 초기화
+		private void Initialize_GridViewContainer(GraphCore graphCore)
+		{
+			var gridview = new GridView(dictionary)
+			{
+				DataContext = new GridViewModel(graphCore)
+			};
+			GridViewContainer.Children.Add(gridview);
 		}
 
 	}

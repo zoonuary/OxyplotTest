@@ -1,0 +1,150 @@
+﻿<UserControl x:Class="OxyTest.Views.GridView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid" 
+			 xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
+			 xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+             xmlns:ViewModels="clr-namespace:OxyTest.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="300" d:DesignWidth="300">
+
+	<UserControl.Resources>
+		<ResourceDictionary Source="pack://application:,,,/OxyTest;component/Themes/Converters.xaml"/>
+	</UserControl.Resources>
+	
+    <Grid>
+		<dxg:GridControl
+			Margin="10" SelectionMode="Row" AutoGenerateColumns="None"
+			EnableSmartColumnsGeneration="True" AllowInitiallyFocusedRow="True" AllowLiveDataShaping="True"
+			ItemsSource="{Binding Graphs}"
+			>
+			<dxg:GridControl.View>
+				<dxg:TableView
+					ShowGroupPanel="False" VerticalScrollbarVisibility="Auto"
+					EditFormPostMode="Immediate" EnableImmediatePosting="True"
+					AllowScrollAnimation="True" ShowIndicator="False"
+					AllowColumnFiltering="False" AllowSorting="False" AllowSortedDataDragDrop="True"
+					AllowDragDrop="True" AllowMoveColumnToDropArea="False" ShowTargetInfoInDragDropHint="True"/>
+			</dxg:GridControl.View>
+			
+			
+			<!-- Visible(Checkbox) -->
+			<dxg:GridColumn FieldName="GraphRenderModel.Visible" Header="" IsSmart="True" Width="23" AllowResizing="False">
+				<dxg:GridColumn.CellTemplate>
+					<DataTemplate>
+					<CheckBox IsChecked="{Binding Data.GraphRenderModel.Visible,Mode=TwoWay}"
+							  HorizontalAlignment="Center" VerticalAlignment="Center"
+							  PreviewMouseDown="CheckBox_PreviewMouseDown"/>
+					</DataTemplate>
+				</dxg:GridColumn.CellTemplate>
+			</dxg:GridColumn>
+
+			
+			
+			<!-- DBC -->
+			<dxg:GridColumn FieldName="SignalDataModel.ReferencedDBC" Header="Dbc"
+							IsSmart="True" Width="*" BestFitMode="VisibleRows" ReadOnly="True" 
+							HorizontalHeaderContentAlignment="Center">
+				<dxg:GridColumn.Visible>
+					<MultiBinding Converter="{StaticResource ColumnVisibilityConverter}">
+						<Binding Path="FieldName" RelativeSource="{RelativeSource Self}"/>
+						<Binding Path="DataContext.ColumnSettings" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+					</MultiBinding>
+				</dxg:GridColumn.Visible>
+			</dxg:GridColumn>
+
+			<!-- ID -->
+			<dxg:GridColumn FieldName="SignalDataModel.ID" Header="Message ID" 
+							IsSmart="True" Width="*" BestFitMode="VisibleRows" ReadOnly="True" 
+							HorizontalHeaderContentAlignment="Center">
+				<dxg:GridColumn.Visible>
+					<MultiBinding Converter="{StaticResource ColumnVisibilityConverter}">
+						<Binding Path="FieldName" RelativeSource="{RelativeSource Self}"/>
+						<Binding Path="DataContext.ColumnSettings" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+					</MultiBinding>
+				</dxg:GridColumn.Visible>
+				<dxg:GridColumn.EditSettings>
+					<dxe:TextEditSettings DisplayFormat="0x{0:X}" />
+				</dxg:GridColumn.EditSettings>
+				<dxg:GridColumn.CellDisplayTemplate>
+					<DataTemplate>
+						<TextBlock Text="{Binding Data.SignalDataModel.ID, StringFormat='0x{0:X}'}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+					</DataTemplate>
+				</dxg:GridColumn.CellDisplayTemplate>
+			</dxg:GridColumn>
+			
+			<!-- Message Name -->
+			<dxg:GridColumn FieldName="SignalDataModel.MessageName" Header="Message Name"
+							IsSmart="True" Width="*" BestFitMode="VisibleRows" ReadOnly="True" 
+							HorizontalHeaderContentAlignment="Center">
+				<dxg:GridColumn.Visible>
+					<MultiBinding Converter="{StaticResource ColumnVisibilityConverter}">
+						<Binding Path="FieldName" RelativeSource="{RelativeSource Self}"/>
+						<Binding Path="DataContext.ColumnSettings" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+					</MultiBinding>
+				</dxg:GridColumn.Visible>
+			</dxg:GridColumn>
+
+			<!-- Signal Name -->
+			<dxg:GridColumn FieldName="SignalDataModel.Name" Header="Signal Name" 
+							IsSmart="True" Width="*" BestFitMode="VisibleRows" ReadOnly="True" 
+							HorizontalHeaderContentAlignment="Center">
+				<dxg:GridColumn.Visible>
+					<MultiBinding Converter="{StaticResource ColumnVisibilityConverter}">
+						<Binding Path="FieldName" RelativeSource="{RelativeSource Self}"/>
+						<Binding Path="DataContext.ColumnSettings" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+					</MultiBinding>
+				</dxg:GridColumn.Visible>
+			</dxg:GridColumn>
+
+			<!-- ValueType(combobox) -->
+			<dxg:GridColumn FieldName="ValueType" Header="Value Type"
+							IsSmart="True" Width="*" BestFitMode="VisibleRows" ReadOnly="True" 
+							HorizontalHeaderContentAlignment="Center">
+				<dxg:GridColumn.Visible>
+					<MultiBinding Converter="{StaticResource ColumnVisibilityConverter}">
+						<Binding Path="FieldName" RelativeSource="{RelativeSource Self}"/>
+						<Binding Path="DataContext.ColumnSettings" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+					</MultiBinding>
+				</dxg:GridColumn.Visible>
+				<dxg:GridColumn.CellTemplate>
+					<DataTemplate>
+						<dxe:ComboBoxEdit IsTextEditable="False" DisplayMember="DisplayName" ValueMember="ValueType" BorderThickness="0" Padding="0" BorderBrush="Transparent"
+										  EditValueChanged="ComboBoxEdit_EditValueChanged"
+										  ItemsSource="{Binding DataContext.ValueTypes, RelativeSource={RelativeSource AncestorType=dxg:GridControl}}"
+										  DisplayTextConverter="{StaticResource ValueTypeToStringConverter }"
+										  EditValue="{Binding Data.ValueType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+										   />
+					</DataTemplate>
+				</dxg:GridColumn.CellTemplate>
+			</dxg:GridColumn>
+
+
+			<!-- Color(combobox) CommandParameter="{Binding Data.GraphRenderModel.BaseColor}"-->
+			<dxg:GridColumn FieldName="ValueType" Header="" Width="23"
+							IsSmart="True" BestFitMode="VisibleRows" ReadOnly="True" 
+							HorizontalHeaderContentAlignment="Center"
+							>
+				<dxg:GridColumn.CellTemplate>
+					<DataTemplate>
+						<Rectangle Width="14" Height="14" Stroke="LightGray" StrokeThickness="1" VerticalAlignment="Center">
+							<Rectangle.Fill>
+								<SolidColorBrush Color="{Binding Data.GraphRenderModel.BaseColor}"/>
+							</Rectangle.Fill>
+							<dxmvvm:Interaction.Behaviors>
+								<dxmvvm:EventToCommand EventName="PreviewMouseLeftButtonDown"
+													   Command="{Binding DataContext.CMD_OpenColorPickerDialog, RelativeSource={RelativeSource AncestorType=UserControl}}"
+													   CommandParameter="{Binding Data.GraphRenderModel}"
+													   />
+							</dxmvvm:Interaction.Behaviors>
+						</Rectangle>
+					</DataTemplate>
+				</dxg:GridColumn.CellTemplate>
+			</dxg:GridColumn>
+
+		</dxg:GridControl>
+		<!--<TextBlock Text="{Binding Converter={StaticResource ColorToBrushConverter}}"/ >    EditValue="{Binding Data.ValueType, Mode =TwoWay, UpdateSourceTrigger=PropertyChanged}"-->
+    </Grid>
+</UserControl>

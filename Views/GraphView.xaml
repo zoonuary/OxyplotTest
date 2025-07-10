@@ -7,6 +7,11 @@
 			 xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm" xmlns:ViewModels="clr-namespace:OxyTest.ViewModels"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
+	
+	<UserControl.Resources>
+		<ResourceDictionary Source="pack://application:,,,/OxyTest;component/Themes/Converters.xaml"/>
+	</UserControl.Resources>
+	
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="30"/>
@@ -21,6 +26,8 @@
 			<Button Content="start" Command="{Binding CMD_START}" Grid.Column="0"/>
 			<Button Content="stop" Command="{Binding CMD_STOP}" Grid.Column="1"/>
 			<Button Content="append graph" Command="{Binding CMD_AppendGraph}" Grid.Column="2"/>
+
+			
 		</Grid>
 
 		<Grid Grid.Row="1">
@@ -28,9 +35,10 @@
 				<ColumnDefinition Width="*"/>
 				<ColumnDefinition Width="*"/>
 			</Grid.ColumnDefinitions>
-			<local:GridView DataContext="{Binding GridViewModel}"/>
+			<Grid x:Name="GridViewContainer"/>
 			<!--<local:GridView DataContext="{Binding GridViewModel}"/>-->
-			<Grid x:Name="GraphPlotArea" Grid.Column="1"/>
+			<!--<local:GridView DataContext="{Binding GridViewModel}"/>-->
+			<Grid x:Name="GraphPlotContainer" Grid.Column="1"/>
 		</Grid>
 		
 	</Grid>

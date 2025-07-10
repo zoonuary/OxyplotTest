@@ -82,6 +82,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Composition\GraphCore.cs" />
+    <Compile Include="Converters\ColorToBrushConverter.cs" />
+    <Compile Include="Converters\ColumnVisibilityConverter.cs" />
+    <Compile Include="Converters\ValueTypeToStringConverter.cs" />
     <Compile Include="Data\GraphData.cs" />
     <Compile Include="Events\EventListener.cs" />
     <Compile Include="Events\LocalBroadCaster.cs" />
@@ -112,10 +115,15 @@
     <Compile Include="ViewModels\Dialogs\SignalAddConfirmDialogViewModel.cs" />
     <Compile Include="ViewModels\Dialogs\SignalAddDialogViewModel.cs" />
     <Compile Include="ViewModels\GraphViewModel.cs" />
-    <Compile Include="ViewModels\GridViewModel.cs" />
+    <Compile Include="ViewModels\GridViews\GridViewModel.cs" />
+    <Compile Include="ViewModels\GridViews\Internals\ColumnSetting.cs" />
+    <Compile Include="ViewModels\GridViews\Internals\GridValueType.cs" />
     <Compile Include="ViewModels\PlotViews\MultipleYPlotViewModel.cs" />
     <Compile Include="ViewModels\PlotViews\SeparateYPlotViewModel.cs" />
     <Compile Include="ViewModels\PlotViews\SingleYPlotViewModel.cs" />
+    <Compile Include="Views\Dialogs\ColorPickerDialog.xaml.cs">
+      <DependentUpon>ColorPickerDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Dialogs\SignalAddConfirmDialog.xaml.cs">
       <DependentUpon>SignalAddConfirmDialog.xaml</DependentUpon>
     </Compile>
@@ -125,9 +133,7 @@
     <Compile Include="Views\GraphView.xaml.cs">
       <DependentUpon>GraphView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\GridView.xaml.cs">
-      <DependentUpon>GridView.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Views\GridViews\GridView.xaml.cs" />
     <Compile Include="Views\PlotViews\MultipleYPlotView.xaml.cs">
       <DependentUpon>MultipleYPlotView.xaml</DependentUpon>
     </Compile>
@@ -156,6 +162,14 @@
     <Analyzer Include="..\..\xlink_application\packages\DevExpress.Mvvm.CodeGenerators.22.1.1\analyzers\dotnet\cs\DevExpress.Mvvm.CodeGenerators.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Themes\Converters.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Dialogs\ColorPickerDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\Dialogs\SignalAddConfirmDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -168,9 +182,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\GridView.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="Views\GridViews\GridView.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\PlotViews\MultipleYPlotView.xaml">
       <SubType>Designer</SubType>

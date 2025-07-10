@@ -34,8 +34,6 @@ namespace OxyTest.Services
 		//private ConcurrentQueue<EventModel> StagedMessages = new ConcurrentQueue<EventModel>();
 		private TimeSpan RenderSpan { get; } = TimeSpan.FromMilliseconds(200);
 
-		private DateTime CurrentTime { get; set; } = DateTime.MinValue;
-
 		private readonly List<Action> callbackActions = new List<Action>();
 
 		private void OnEvent(EventModel model)
@@ -58,7 +56,6 @@ namespace OxyTest.Services
 
 		private void AppendEventData(EventModel eventModel)
 		{
-			CurrentTime = eventModel.TimeStamp;
 			foreach(var graphModel in GraphData.Graphs)
 			{
 				if(graphModel.SignalDataModel.ID == eventModel.ID)

@@ -31,6 +31,13 @@ namespace OxyTest
 		MULTIPLE_Y,
 		SEPARATE_Y
 	}
+
+	//value Type
+	public enum eVALUE_TYPE
+	{
+		RAW,
+		PHYSICAL,
+	}
 	//class Enums
 	//{
 	//}

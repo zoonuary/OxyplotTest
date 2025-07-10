@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 
 namespace OxyTest.Models.Graph
 {
@@ -15,17 +16,72 @@ namespace OxyTest.Models.Graph
 		/*
 		 * GraphRenderModel에선 화면에 그려질 때만 필요한 데이터들을 취급
 		 */
-		public GraphRenderModel()
+		public GraphRenderModel(object tag, SignalDataModel signal)
 		{
 			Initialize();
+			Initialize_YAxis(tag, signal);
 		}
 
 		private void Initialize()
 		{
 			PlotMode = ePLOT_MODE.LINE;
+			Visible = true;
+			BaseColor = Colors.Red;
+		}
+
+		private void Initialize_YAxis(object tag, SignalDataModel signal)
+		{
+			var valueDescriptions = signal.ValueDescriptions;
+			YAxis = new LinearAxis
+			{
+				Position = AxisPosition.Left,
+				Key = tag.ToString(),
+				Title = signal.Name,
+				LabelFormatter = input =>
+				{
+					if (input % 1 == 0 && valueDescriptions.ContainsKey((int)input))
+					{
+						return valueDescriptions[(int)input];
+					}
+					return input.ToString();
+				}
+			};
 		}
 
 		public ePLOT_MODE PlotMode; //Todo : PlotMode가 바뀌는 경우, 바뀌게 되는 다른 series에 데이터를 추가해야함, UpdateSeries를 활용하는게 좋아보임
+
+		private bool visible;
+		public bool Visible
+		{
+			get => visible;
+			set
+			{
+				if(visible != value)
+				{
+					visible = value;
+					NotifyPropertyChanged("Visible");
+				}
+			}
+		}
+
+		private Color baseColor;
+		public Color BaseColor
+		{
+			get => baseColor;
+			set
+			{
+				if(baseColor != value)
+				{
+					baseColor = value;
+					NotifyPropertyChanged("BaseColor");
+				}
+			}
+		}
+
+		public OxyColor OxyColor => OxyColor.FromArgb(BaseColor.A, BaseColor.R, BaseColor.G, BaseColor.B);
+
+		public LinearAxis YAxis { get; set; }
+
 
 		public Series CurrentSeries
 		{
@@ -78,8 +134,10 @@ namespace OxyTest.Models.Graph
 			lineSeries.Points.Clear();
 			foreach(GraphDataPoint point in data)
 			{
-				lineSeries.Points.Add(DateTimeAxis.CreateDataPoint(point.X, point.Y));
+				lineSeries.Points.Add(new DataPoint(point.X, point.Y));
 			}
+
+			//lineSeries.Points.Add(new DataPoint(point.X, point.Y)); 하나씩 넣는거 말고 리스트 통으로 만들어서 append 방식이 좀 더 라이브러리에 최적화됨
 		}
 
 		//bar 는 index 기반이기에 구현에 장애가 많음.
@@ -99,7 +157,7 @@ namespace OxyTest.Models.Graph
 
 			foreach(GraphDataPoint point in data)
 			{
-				areaSeries.Points.Add(DateTimeAxis.CreateDataPoint(point.X, point.Y));
+				//areaSeries.Points.Add(DateTimeAxis.CreateDataPoint(point.X, point.Y));
 			}
 		}
 

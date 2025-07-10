@@ -7,7 +7,9 @@
 	xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
 	
     Title="" Height="600" Width="800"
-    KeyDown="ThemedWindow_KeyDown"
+    WindowStartupLocation="CenterOwner"
+	KeyDown="ThemedWindow_KeyDown"
+	
 	>
 
 	<dxmvvm:Interaction.Behaviors>

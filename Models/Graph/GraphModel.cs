@@ -19,21 +19,38 @@ namespace OxyTest.Models.Graph
 	{
 		public GraphModel(SignalDataModel signalDataModel)
 		{
+			Tag = Guid.NewGuid();
 			SignalDataModel = signalDataModel;
-			GraphRenderModel = new GraphRenderModel();
+			GraphRenderModel = new GraphRenderModel(Tag, SignalDataModel);
+			ValueType = eVALUE_TYPE.RAW;
 		}
+
+		public object Tag { get; }
 
 		//model이 생성될 때, 들어오는 signal 정보 클래스
 		public SignalDataModel SignalDataModel { get; }
-
 		//실제로 그려질 부분만 담아두기 용이하도록 만든 Render Model 클래스
 		public GraphRenderModel GraphRenderModel { get; }
 
-		private readonly object _listLock = new object();
-		//graph data를 공용으로 보관할 list
-		private readonly List<GraphDataPoint> rawDataSource = new List<GraphDataPoint>();
+		private eVALUE_TYPE valueType;
+		public eVALUE_TYPE ValueType
+		{
+			get => valueType;
+			set
+			{
+				if(valueType != value)
+				{
+					valueType = value;
+					NotifyPropertyChanged("ValueType");
+				}
+			}
+		}
 
-		private readonly List<GraphDataPoint> physicalDataSource = new List<GraphDataPoint>();
+		private readonly object _listLock = new();
+		//graph data를 공용으로 보관할 list
+		private readonly List<GraphDataPoint> rawDataSource = new();
+
+		private readonly List<GraphDataPoint> physicalDataSource = new();
 
 		////datapoints
 		//public Series DataSeries { get; set; } 

@@ -10,7 +10,7 @@ namespace OxyTest.Models.Graph
 	public class SignalDataModel : INotifyPropertyChanged
 	{
 		//GraphModel의 signal property들을 분리하기위해 만든 클래스
-		public SignalDataModel(string referencedDBC, string name, uint id, string messageName, double factor, double offset, ushort length, ushort startbit, bool isUnsigned)
+		public SignalDataModel(string referencedDBC, string name, uint id, string messageName, double factor, double offset, ushort length, ushort startbit, bool isUnsigned, IReadOnlyDictionary<int, string> valueDescriptions)
 		{
 			ReferencedDBC = referencedDBC;
 			Name = name;
@@ -21,6 +21,7 @@ namespace OxyTest.Models.Graph
 			Length = length;
 			StartBit = startbit;
 			IsUnsigned = isUnsigned;
+			ValueDescriptions = valueDescriptions;
 		}
 
 		public string ReferencedDBC { get; }
@@ -32,6 +33,7 @@ namespace OxyTest.Models.Graph
 		public ushort Length { get; }
 		public ushort StartBit { get; }
 		public bool IsUnsigned { get; }
+		public IReadOnlyDictionary<int, string> ValueDescriptions { get; }
 
 		public event PropertyChangedEventHandler PropertyChanged;
 		private void NotifyPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
