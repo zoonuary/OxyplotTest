@@ -33,7 +33,12 @@ namespace OxyTest.Composition
 		/// </summary>
 		public void SubscribeModelUpdates(Action callback)
 		{
-			GraphProcessor.RegisterCalbackAction(callback);
+			GraphProcessor.RegisterCallbackAction(callback);
 		}
+
+		public void UnSubscribeModelUpdates()
+        {
+			GraphProcessor.UnRegisterCallbackAction();
+        }
 	}
 }

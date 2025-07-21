@@ -21,7 +21,8 @@ namespace OxyTest
 		LINE,
 		BAR,
 		POINT,
-		AREA
+		AREA,
+		LINE_POINT
 	}
 
 	//navigation page type

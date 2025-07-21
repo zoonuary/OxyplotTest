@@ -1,5 +1,7 @@
 ﻿using DevExpress.Mvvm.CodeGenerators;
 using DevExpress.Xpf.Editors;
+using OxyTest.Models.Graph;
+using OxyTest.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,7 +29,10 @@ namespace OxyTest.Views
 
 			this.DataContextChanged += (s, e) =>
 			{
-
+				if(DataContext is GridViewModel vm)
+                {
+					vm.GridControl = GridControl;
+                }
 			};
 
 		}

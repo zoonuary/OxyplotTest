@@ -84,6 +84,8 @@
     <Compile Include="Composition\GraphCore.cs" />
     <Compile Include="Converters\ColorToBrushConverter.cs" />
     <Compile Include="Converters\ColumnVisibilityConverter.cs" />
+    <Compile Include="Converters\IsSingleYConverter.cs" />
+    <Compile Include="Converters\PlotModeToStringConverter.cs" />
     <Compile Include="Converters\ValueTypeToStringConverter.cs" />
     <Compile Include="Data\GraphData.cs" />
     <Compile Include="Events\EventListener.cs" />
@@ -117,7 +119,10 @@
     <Compile Include="ViewModels\GraphViewModel.cs" />
     <Compile Include="ViewModels\GridViews\GridViewModel.cs" />
     <Compile Include="ViewModels\GridViews\Internals\ColumnSetting.cs" />
+    <Compile Include="ViewModels\GridViews\Internals\GridPlotType.cs" />
     <Compile Include="ViewModels\GridViews\Internals\GridValueType.cs" />
+    <Compile Include="ViewModels\GridViews\Internals\SelectedItemsBehavior.cs" />
+    <Compile Include="ViewModels\PlotViews\PlotViewModel.cs" />
     <Compile Include="ViewModels\PlotViews\MultipleYPlotViewModel.cs" />
     <Compile Include="ViewModels\PlotViews\SeparateYPlotViewModel.cs" />
     <Compile Include="ViewModels\PlotViews\SingleYPlotViewModel.cs" />
@@ -134,6 +139,9 @@
       <DependentUpon>GraphView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\GridViews\GridView.xaml.cs" />
+    <Compile Include="Views\PlotViews\PlotView.xaml.cs">
+      <DependentUpon>PlotView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\PlotViews\MultipleYPlotView.xaml.cs">
       <DependentUpon>MultipleYPlotView.xaml</DependentUpon>
     </Compile>
@@ -185,6 +193,10 @@
     <Page Include="Views\GridViews\GridView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\PlotViews\PlotView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\PlotViews\MultipleYPlotView.xaml">
       <SubType>Designer</SubType>

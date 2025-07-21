@@ -6,6 +6,8 @@
 	<converters:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
 	<converters:ColumnVisibilityConverter x:Key="ColumnVisibilityConverter"/>
 	<converters:ValueTypeToStringConverter x:Key="ValueTypeToStringConverter"/>
+    <converters:PlotModeToStringConverter x:Key="PlotModeToStringConverter"/>
+    <converters:IsSingleYConverter x:Key="IsSingleYConverter"/>
 </ResourceDictionary>
 
 <!--<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"

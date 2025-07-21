@@ -17,12 +17,14 @@ namespace OxyTest.Models.Graph
 	/// </summary>
 	public class GraphModel : INotifyPropertyChanged
 	{
+		public GraphModel() { }
 		public GraphModel(SignalDataModel signalDataModel)
 		{
 			Tag = Guid.NewGuid();
 			SignalDataModel = signalDataModel;
 			GraphRenderModel = new GraphRenderModel(Tag, SignalDataModel);
-			ValueType = eVALUE_TYPE.RAW;
+			ValueType = eVALUE_TYPE.PHYSICAL;
+			GraphRenderModel.Initialize();
 		}
 
 		public object Tag { get; }
@@ -32,16 +34,33 @@ namespace OxyTest.Models.Graph
 		//실제로 그려질 부분만 담아두기 용이하도록 만든 Render Model 클래스
 		public GraphRenderModel GraphRenderModel { get; }
 
+		private bool selected;
+		public bool Selected
+        {
+			get => selected;
+            set
+            {
+				if(selected != value)
+                {
+					selected = value;
+					GraphRenderModel.Selected = value;
+					//NotifyPropertyChanged(nameof(Selected));
+				}
+            }
+        }
+
+
 		private eVALUE_TYPE valueType;
 		public eVALUE_TYPE ValueType
 		{
 			get => valueType;
 			set
 			{
-				if(valueType != value)
+				if (valueType != value)
 				{
 					valueType = value;
-					NotifyPropertyChanged("ValueType");
+					GraphRenderModel.ValueType = value;
+					NotifyPropertyChanged(nameof(ValueType));
 				}
 			}
 		}

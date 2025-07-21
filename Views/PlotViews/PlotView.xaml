@@ -1,14 +1,14 @@
-﻿<UserControl x:Class="OxyTest.Views.SeparateYPlotView"
+﻿<UserControl x:Class="OxyTest.Views.PlotView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:oxy="http://oxyplot.org/wpf"
              xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm" xmlns:ViewModels="clr-namespace:OxyTest.ViewModels"
              mc:Ignorable="d"
+             xmlns:oxy="http://oxyplot.org/wpf"
              d:DesignHeight="300" d:DesignWidth="300">
 <!--<UserControl.DataContext>
-    <ViewModels:SeparateYPlotViewModel/>
+    <ViewModels:PlotViewModel/>
 </UserControl.DataContext>-->
     <Grid>
         <oxy:PlotView Model="{Binding PlotModel}"/>

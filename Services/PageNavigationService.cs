@@ -21,13 +21,7 @@ namespace OxyTest.Services
 		public PageNavigationService(GraphCore graphCore)
 		{
 			GraphCore = graphCore;
-			navigationFrame = new NavigationFrame();
-
-			service = new FrameNavigationService()
-			{
-				Frame = NavigationFrame
-			};
-
+			navigationFrame = new NavigationFrame { AnimationType = AnimationType.None };
 			Initialize_Views();
 		}
 
@@ -56,16 +50,8 @@ namespace OxyTest.Services
 		private readonly Dictionary<ePAGE_TYPE, UserControl> CachedPages = new Dictionary<ePAGE_TYPE, UserControl>();
 
 		private NavigationFrame navigationFrame { get; }
-		private FrameNavigationService service { get; }
 
 		public NavigationFrame NavigationFrame => navigationFrame;
-
-		public void to()
-		{
-			UserControl page = CachedPages[ePAGE_TYPE.SINGLE_Y];
-			//service.Navigate
-			
-		}
 
 		public void Navigate(ePAGE_TYPE pagetype)
 		{
@@ -80,8 +66,20 @@ namespace OxyTest.Services
 					}
 					break;
 				case ePAGE_TYPE.MULTIPLE_Y:
+                    {
+                        if (CachedPages.ContainsKey(ePAGE_TYPE.MULTIPLE_Y))
+                        {
+							navigationFrame.Navigate(CachedPages[ePAGE_TYPE.MULTIPLE_Y]);
+                        }
+                    }
 					break;
 				case ePAGE_TYPE.SEPARATE_Y:
+                    {
+                        if (CachedPages.ContainsKey(ePAGE_TYPE.SEPARATE_Y))
+                        {
+							navigationFrame.Navigate(CachedPages[ePAGE_TYPE.SEPARATE_Y]);
+                        }
+                    }
 					break;
 			}
 		}

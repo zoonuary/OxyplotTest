@@ -5,101 +5,101 @@ using OxyTest.Composition;
 using OxyTest.Data;
 using OxyTest.Models.Graph;
 using OxyTest.Services;
+using System;
+using System.Linq;
 using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace OxyTest.ViewModels
 {
-	public class GraphViewModel : ViewModelBase
-	{
-		private GraphCore GraphCore { get; }
-		public GraphViewModel(GraphCore graphCore)
-		{
-			GraphCore = graphCore;
+    public class GraphViewModel : ViewModelBase
+    {
+        public GraphCore GraphCore { get; }
+        private GridViewModel GridViewModel { get; } //GraphView에 종속되는 Gridveiw의 Viewmodel. 일종의 부모 자식 관계로 취급
+        
 
-			PlotModel = new PlotModel();
+        public GraphViewModel(GraphCore graphCore, GridViewModel gridViewModel)
+        {
+            GraphCore = graphCore;
+            GridViewModel = gridViewModel;
 
+            CMD_START = new DelegateCommand(() => GraphCore.GraphProcessor.StartProcess());
+            CMD_STOP = new DelegateCommand(() => GraphCore.GraphProcessor.StopProcess());
+            //----------------------------------------
+            CMD_AppendGraph = new DelegateCommand(OpenSignalAddDialog);
+            CMD_RemoveGraph = new DelegateCommand(OnSignalsRemoved);
+            CMD_ClearGraph = new DelegateCommand(OnSignalsCleared);
+            CMD_ShowRawValues = new DelegateCommand(OnShowRawValues);
+            CMD_ShowPhysicalValues = new DelegateCommand(OnShowPhysicalValues);
+            
 
-			var axis = new DateTimeAxis
-			{
-				Position = AxisPosition.Bottom,
-				StringFormat = "HH:mm:ss.fff",
-			};
-			PlotModel.Axes.Add(axis);
+            //----------------------------------------
+            CMD_ViewTypeChanged = new DelegateCommand<object>(OnViewTypeChanged);
+        }
 
-			var yaxis2 = new LinearAxis
-			{
-				Position = AxisPosition.Left,
-				//Key = "Y2",
-				//PositionTier = 1,
-				//StartPosition = 0.5,
-				//EndPosition = 1.0
-			};
-			PlotModel.Axes.Add(yaxis2);
+        public ICommand CMD_START { get; }
+        public ICommand CMD_STOP { get; }
 
-			CMD_START = new DelegateCommand(() => GraphCore.GraphProcessor.StartProcess());
-			CMD_STOP = new DelegateCommand(() => GraphCore.GraphProcessor.StopProcess());
-			CMD_AppendGraph = new DelegateCommand(OpenSignalAddDialog);
-		}
+        //---------------------------------------
+        public ICommand CMD_AppendGraph { get; }
+        public ICommand CMD_RemoveGraph { get; }
+        public ICommand CMD_ClearGraph { get; }
+        public ICommand CMD_ShowRawValues { get; }
+        public ICommand CMD_ShowPhysicalValues { get; }
 
-		public ICommand CMD_START { get; }
-		public ICommand CMD_STOP { get; }
-		public ICommand CMD_AppendGraph { get; }
-
-		//임시, view에 들어갈 plotModel
-		public PlotModel PlotModel { get; }
-
+        //---------------------------------------
+        public ICommand CMD_ViewTypeChanged { get; }
 
 
-		public void OpenSignalAddDialog()
-		{
-			GraphCore.DialogService.ShowSignalAddDialog(OnSignalAdded);
-		}
+        public void OpenSignalAddDialog()
+        {
+            GraphCore.DialogService.ShowSignalAddDialog(OnSignalAdded);
+        }
 
-		private void OnSignalAdded(GraphModel model)
-		{
-			GraphCore.GraphData.AddGraph(model);
-			//GraphCore.GraphData.Graphs.Add(model);
+        private void OnSignalAdded(GraphModel model)
+        {
+            GraphCore.GraphData.AddGraph(model);
+        }
 
+        private void OnSignalsRemoved() //일부 삭제(selectedItems)
+        {
+            foreach (var graph in GridViewModel.SelectedItems.Cast<GraphModel>().ToList())
+            {
+                if (graph is GraphModel model)
+                {
+                    GraphCore.GraphData.RemoveGraph(model);
+                }
+            }
+        }
 
-			//아래 주석은 추가로 graph를 그릴 때 필요한 property를 커스텀해서 추가하던 코드.
+        private void OnSignalsCleared() //전체 삭제
+        {
+            GraphCore.GraphData.ClearGraphs();
+        }
 
+        private void OnShowRawValues() //이 raw / physical 두 속성은 렌더링 성능에 영향이 갈 수도 있음(model이 많아지거나, signal series 갯수가 많은 경우) 
+        {
+            foreach(var graph in GraphCore.GraphData.Graphs)
+            {
+                graph.ValueType = eVALUE_TYPE.RAW; //property 변경할 때마다 값이 다른경우 화면이 갱신됨으로 주의 필요
+            }
+        }
 
+        private void OnShowPhysicalValues()
+        {
+            foreach(var graph in GraphCore.GraphData.Graphs)
+            {
+                graph.ValueType = eVALUE_TYPE.PHYSICAL;
+            }
+        }
 
-
-			//var graphModel = new GraphModel(this) //모델 생성
-			//{
-			//	DataMode = eDATA_MODE.PHYSICAL,
-
-			//	//graph datas
-			//	//Data = analogWaveform.Clone(),
-			//	PhysicalData = analogWaveform.Clone(),
-			//	RawData = analogWaveform.Clone(),
-
-			//	Tag = Guid.NewGuid(),
-			//	Selected = false,
-			//	GridLineVisible = this.GridLineVisible,
-			//	Visible = true,
-			//	ForeColor = WebColors.GetColorTemplate(),
-			//	XRange = XRange, //추가안하면 시간 동기화가 안되어있는것처럼 보임 
-			//					 //YRange = YRange
-			//};
-			////Range 설정
-			//graphModel.PhysicalRange = graphModel.GetPhysicalRange(signal.Length, signal.Factor, signal.Offset, UnsignedType);
-			//graphModel.RawRange = graphModel.GetRawRange(signal.Length, UnsignedType);
-			////Data default 설정
-			////graphModel.Data = graphModel.IsRawmode ? graphModel.RawData : graphModel.PhysicalData;
-			////YAxis Label Value Converter 설정
-			//graphModel.YAxis.SetConverter(item.ValueDescriptions);
-
-
-			////해당 model이 can인지 can fd인지 알 수 있는 방법은?
-			//UpdateGraph(GraphEventBroadCaster.GetStoredCANMessage(), graphModel);
-			//UpdateGraph(GraphEventBroadCaster.GetStoredCANFDMessage(), graphModel);
-
-			//Graphs.Add(graphModel);
-			//SelectedRow = graphModel;
-		}
-
-	}
+        private void OnViewTypeChanged(object param)
+        {
+            if (param is string s && Enum.TryParse<ePAGE_TYPE>(s, out var viewType))
+            {
+                GraphCore.GraphData.PageType = viewType;
+            }
+        }
+        
+    }
 }

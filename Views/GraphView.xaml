@@ -5,41 +5,93 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:OxyTest.Views"
 			 xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm" xmlns:ViewModels="clr-namespace:OxyTest.ViewModels"
+             xmlns:dxb="http://schemas.devexpress.com/winfx/2008/xaml/bars"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
 	
 	<UserControl.Resources>
 		<ResourceDictionary Source="pack://application:,,,/OxyTest;component/Themes/Converters.xaml"/>
 	</UserControl.Resources>
-	
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="30"/>
-			<RowDefinition Height="*"/>
-		</Grid.RowDefinitions>
-		<Grid>
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="*"/>
-				<ColumnDefinition Width="*"/>
-				<ColumnDefinition Width="*"/>
-			</Grid.ColumnDefinitions>
-			<Button Content="start" Command="{Binding CMD_START}" Grid.Column="0"/>
-			<Button Content="stop" Command="{Binding CMD_STOP}" Grid.Column="1"/>
-			<Button Content="append graph" Command="{Binding CMD_AppendGraph}" Grid.Column="2"/>
 
-			
-		</Grid>
+    <dxmvvm:Interaction.Behaviors>
+        <dxmvvm:EventToCommand EventName="Loaded" Command="{Binding CMD_Loaded}"/>
+    </dxmvvm:Interaction.Behaviors>
 
-		<Grid Grid.Row="1">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="*"/>
-				<ColumnDefinition Width="*"/>
-			</Grid.ColumnDefinitions>
-			<Grid x:Name="GridViewContainer"/>
-			<!--<local:GridView DataContext="{Binding GridViewModel}"/>-->
-			<!--<local:GridView DataContext="{Binding GridViewModel}"/>-->
-			<Grid x:Name="GraphPlotContainer" Grid.Column="1"/>
-		</Grid>
-		
-	</Grid>
+
+    <DockPanel LastChildFill="True">
+        <dxb:BarManager DockPanel.Dock="Top">
+            <dxb:BarManager.Bars>
+                <dxb:Bar Caption="Main Menu" IsMainMenu="True">
+                    <dxb:Bar.DockInfo>
+                        <dxb:BarDockInfo ContainerType="Top"/>
+                    </dxb:Bar.DockInfo>
+                    <dxb:Bar.Items>
+                        <!--<dxb:BarCheckItem Content="Start" GroupIndex="0"
+										  ToolTip="Start updating graph"
+										  ToolTipService.ShowOnDisabled="True"
+										  IsChecked="{Binding DataContext.GraphData.PlayMode, 
+														RelativeSource={RelativeSource AncestorType=UserControl}, 
+														Converter={StaticResource PlayModeToBooleanConverer}, Mode=TwoWay}"
+										  IsEnabled="{Binding DataContext.GraphData.PlayMode, 
+														RelativeSource={RelativeSource AncestorType=UserControl}, 
+														Converter={StaticResource PlayModeToEnabledConverter}}"/>
+                        --><!--Command="{Binding DataContext.GraphData.Paused, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"--><!--
+                        <dxb:BarCheckItem Content="Stop" GroupIndex="0" 
+										  ToolTip="Pause graph updates"
+										  ToolTipService.ShowOnDisabled="True"
+										  IsEnabled="{Binding DataContext.GraphData.PlayMode, 
+														RelativeSource={RelativeSource AncestorType=UserControl}, 
+														Converter={StaticResource PlayModeToEnabledConverter}}"/>-->
+
+                        <dxb:BarButtonItem Content="Start" Command="{Binding CMD_START}"
+                                          ToolTip="Start Updating Graph"
+                                          />
+                        <dxb:BarButtonItem Content="Stop" Command="{Binding CMD_STOP}"/>
+                        <dxb:BarButtonItem Content="clear"/>
+
+                        <dxb:BarItemLinkSeparator/>
+
+                        <dxb:BarButtonItem Content="Add Signal..." Command="{Binding CMD_AppendGraph}"/>
+                        <dxb:BarButtonItem Content="Remove Signal" Command="{Binding CMD_RemoveGraph}"/>
+                        <dxb:BarButtonItem Content="Clear Signals" Command="{Binding CMD_ClearGraph}"/>
+
+                        <dxb:BarButtonItem Content="ShowRawValue" Command="{Binding CMD_ShowRawValues}"/>
+                        <dxb:BarButtonItem Content="ShowPhysicalValue" Command="{Binding CMD_ShowPhysicalValues}"/>
+
+                        <dxb:BarItemLinkSeparator/>
+
+                        <dxb:BarSplitCheckItem Content="ViewType" ActAsDropDown="True" AllowUncheckInGroup="False" x:Name="ViewTypeSplitCheckItem">
+                            <dxb:PopupMenu Closed="PopupMenu_Closed">
+                                <dxb:BarCheckItem Content="Single Y" GroupIndex="1" Command="{Binding CMD_ViewTypeChanged}" CommandParameter="SINGLE_Y" IsChecked="True"/>
+                                <dxb:BarCheckItem Content="Multiple Y" GroupIndex="1" Command="{Binding CMD_ViewTypeChanged}" CommandParameter="MULTIPLE_Y"/>
+                                <dxb:BarCheckItem Content="Separate Y" GroupIndex="1" Command="{Binding CMD_ViewTypeChanged}" CommandParameter="SEPARATE_Y"/>
+                            </dxb:PopupMenu>
+                        </dxb:BarSplitCheckItem>
+
+                        <dxb:BarSplitCheckItem Content="Label" ActAsDropDown="True" x:Name="LabelSplitCheckItem">
+                            <dxb:PopupMenu Closed="PopupMenu_Closed">
+                                <dxb:BarCheckItem Content="X-Axis" IsChecked="{Binding GraphCore.GraphData.Xaxis_LabelVisible, Mode=TwoWay}"/>
+
+                                <dxb:BarCheckItem Content="Y-Axis" IsChecked="{Binding GraphCore.GraphData.Yaxis_LabelVisible, Mode=TwoWay}"/>
+                            </dxb:PopupMenu>
+                        </dxb:BarSplitCheckItem>
+
+                        <dxb:BarItemLinkSeparator/>
+
+                        <dxb:BarCheckItem Content="Measuring Cursor"/>
+                        <dxb:BarCheckItem Content="Diff Cursor"/>
+                    </dxb:Bar.Items>
+                </dxb:Bar>
+            </dxb:BarManager.Bars>
+
+            <Grid DockPanel.Dock="Bottom">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="GridViewContainer"/>
+                <Grid x:Name="GraphPlotContainer" Grid.Column="1"/>
+            </Grid>
+        </dxb:BarManager>
+    </DockPanel>
 </UserControl>

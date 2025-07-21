@@ -34,7 +34,7 @@ namespace OxyTest.Services
 		//private ConcurrentQueue<EventModel> StagedMessages = new ConcurrentQueue<EventModel>();
 		private TimeSpan RenderSpan { get; } = TimeSpan.FromMilliseconds(200);
 
-		private readonly List<Action> callbackActions = new List<Action>();
+		private Action callbackAction { get; set; }
 
 		private void OnEvent(EventModel model)
 		{
@@ -74,18 +74,19 @@ namespace OxyTest.Services
 			{
 				model.PushListToRenderModel();
 			}
-			
-			//등록된 action 실행 => viewmodel로 update되었음을 알려줌
-			foreach(var action in callbackActions)
-			{
-				action?.Invoke();
-			}
+			callbackAction?.Invoke(); //등록된 action 실행 => viewmodel로 update되었음을 알려줌
 		}
 
-		public void RegisterCalbackAction(Action callback)
+		public void RegisterCallbackAction(Action callback)
 		{
-			callbackActions.Add(callback);
+			callbackAction = callback;
 		}
+
+		public void UnRegisterCallbackAction()
+        {
+			callbackAction = null;
+        }
+
 
 		public void StartProcess()
 		{

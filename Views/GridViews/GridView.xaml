@@ -6,7 +6,7 @@
 			 xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid" 
 			 xmlns:dxe="http://schemas.devexpress.com/winfx/2008/xaml/editors"
 			 xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
-             xmlns:ViewModels="clr-namespace:OxyTest.ViewModels"
+             xmlns:Internals="clr-namespace:OxyTest.ViewModels.GridViews.Internals"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
 
@@ -15,18 +15,22 @@
 	</UserControl.Resources>
 	
     <Grid>
-		<dxg:GridControl
+		<dxg:GridControl x:Name="GridControl"
 			Margin="10" SelectionMode="Row" AutoGenerateColumns="None"
 			EnableSmartColumnsGeneration="True" AllowInitiallyFocusedRow="True" AllowLiveDataShaping="True"
-			ItemsSource="{Binding Graphs}"
-			>
+			ItemsSource="{Binding Graphs}" SelectedItem="{Binding SelectedItem}"
+            >
+            <dxmvvm:Interaction.Behaviors>
+                <Internals:SelectedItemsBehavior SelectedItems="{Binding SelectedItems}"/>
+            </dxmvvm:Interaction.Behaviors>
 			<dxg:GridControl.View>
 				<dxg:TableView
 					ShowGroupPanel="False" VerticalScrollbarVisibility="Auto"
 					EditFormPostMode="Immediate" EnableImmediatePosting="True"
 					AllowScrollAnimation="True" ShowIndicator="False"
 					AllowColumnFiltering="False" AllowSorting="False" AllowSortedDataDragDrop="True"
-					AllowDragDrop="True" AllowMoveColumnToDropArea="False" ShowTargetInfoInDragDropHint="True"/>
+					AllowDragDrop="True" AllowMoveColumnToDropArea="False" ShowTargetInfoInDragDropHint="True"
+                    />
 			</dxg:GridControl.View>
 			
 			
@@ -103,27 +107,42 @@
 			<dxg:GridColumn FieldName="ValueType" Header="Value Type"
 							IsSmart="True" Width="*" BestFitMode="VisibleRows" ReadOnly="True" 
 							HorizontalHeaderContentAlignment="Center">
-				<dxg:GridColumn.Visible>
+				<!--<dxg:GridColumn.Visible>
 					<MultiBinding Converter="{StaticResource ColumnVisibilityConverter}">
 						<Binding Path="FieldName" RelativeSource="{RelativeSource Self}"/>
 						<Binding Path="DataContext.ColumnSettings" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
 					</MultiBinding>
-				</dxg:GridColumn.Visible>
+				</dxg:GridColumn.Visible>-->
 				<dxg:GridColumn.CellTemplate>
 					<DataTemplate>
 						<dxe:ComboBoxEdit IsTextEditable="False" DisplayMember="DisplayName" ValueMember="ValueType" BorderThickness="0" Padding="0" BorderBrush="Transparent"
 										  EditValueChanged="ComboBoxEdit_EditValueChanged"
 										  ItemsSource="{Binding DataContext.ValueTypes, RelativeSource={RelativeSource AncestorType=dxg:GridControl}}"
 										  DisplayTextConverter="{StaticResource ValueTypeToStringConverter }"
-										  EditValue="{Binding Data.ValueType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+										  EditValue="{Binding Row.ValueType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 										   />
 					</DataTemplate>
 				</dxg:GridColumn.CellTemplate>
 			</dxg:GridColumn>
-
-
-			<!-- Color(combobox) CommandParameter="{Binding Data.GraphRenderModel.BaseColor}"-->
-			<dxg:GridColumn FieldName="ValueType" Header="" Width="23"
+            
+            <!-- PlotType(combobox) -->
+            <dxg:GridColumn FieldName="PlotType" Header="Plot Type"
+							IsSmart="True" Width="*" BestFitMode="VisibleRows" ReadOnly="True" 
+							HorizontalHeaderContentAlignment="Center">
+                <dxg:GridColumn.CellTemplate>
+                    <DataTemplate>
+                        <dxe:ComboBoxEdit IsTextEditable="False" DisplayMember="DisplayName" ValueMember="PlotMode" BorderThickness="0" Padding="0" BorderBrush="Transparent"
+										  EditValueChanged="ComboBoxEdit_EditValueChanged"
+                                          ItemsSource="{Binding DataContext.PlotTypes, RelativeSource={RelativeSource AncestorType=dxg:GridControl}}"
+                                          DisplayTextConverter="{StaticResource PlotModeToStringConverter}"
+                                          EditValue="{Binding Row.GraphRenderModel.PlotMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          />
+                    </DataTemplate>
+                </dxg:GridColumn.CellTemplate>
+            </dxg:GridColumn>
+            
+			<!-- Color(popup button) -->
+			<dxg:GridColumn FieldName="Color" Header="" Width="23"
 							IsSmart="True" BestFitMode="VisibleRows" ReadOnly="True" 
 							HorizontalHeaderContentAlignment="Center"
 							>

@@ -32,13 +32,11 @@ namespace OxyTest.Views
 		{
 			var core = new GraphCore(this); //모듈에 필요한 주요 클래스 전부 로드
 			Resources.MergedDictionaries.Add(dictionary); //resource dictionary 추가.
-
 			InitializeComponent();
-			DataContext = new GraphViewModel(core);
-
-			Initialize_GridViewContainer(core);
+			GridViewModel gridViewModel = Initialize_GridViewContainer(core);
 			Initialize_GraphPlotContainer(core);
 
+			DataContext = new GraphViewModel(core, gridViewModel);
 			//Loaded += (s, e) =>
 			//{
 			// // popup될 때마다 handle을 가져오도록 변경. 부모 window가 docking system임.
@@ -56,19 +54,35 @@ namespace OxyTest.Views
 		//Graph plot 내부 NavigationFrame 초기화 및 초기 화면(SINGLE_Y)으로 로드
 		private void Initialize_GraphPlotContainer(GraphCore core)
 		{
+#if true  //1 plot view 테스트코드
+			var plotview = new PlotView()
+			{
+				DataContext = new PlotViewModel(core)
+			};
+			GraphPlotContainer.Children.Add(plotview);
+#else
+
 			GraphPlotContainer.Children.Add(core.NavigationService.NavigationFrame);
-			core.NavigationService.Navigate(ePAGE_TYPE.SINGLE_Y);
+			core.NavigationService.Navigate(ePAGE_TYPE.SINGLE_Y); // => viewmodel에서 navigate하여 상태 변경하도록 수정
+#endif
 		}
 
 		//Gridview 생성 및 초기화
-		private void Initialize_GridViewContainer(GraphCore graphCore)
+		private GridViewModel Initialize_GridViewContainer(GraphCore graphCore)
 		{
+			var viewmodel = new GridViewModel(graphCore);
 			var gridview = new GridView(dictionary)
 			{
-				DataContext = new GridViewModel(graphCore)
+				DataContext = viewmodel
 			};
 			GridViewContainer.Children.Add(gridview);
+			return viewmodel;
 		}
 
-	}
+        private void PopupMenu_Closed(object sender, EventArgs e)
+        {
+			LabelSplitCheckItem.IsChecked = false;
+			ViewTypeSplitCheckItem.IsChecked = false;
+		}
+    }
 }

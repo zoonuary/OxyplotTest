@@ -10,11 +10,7 @@
 <!--<UserControl.DataContext>
     <ViewModels:SingleYPlotViewModel/>
 </UserControl.DataContext>-->
-    <Grid Background="White">
-		<TextBlock Text="singleYPlot"/>
-
-		<oxy:PlotView Model="{Binding PlotModel}"/>
-
-
-	</Grid>
+    <Grid>
+        <oxy:PlotView Model="{Binding PlotModel}"/>
+    </Grid>
 </UserControl>
