@@ -10,8 +10,8 @@ namespace OxyTest.ViewModels.GridVIews.Internals
 	public class ColumnSetting:INotifyPropertyChanged
 	{
 		public string FieldName { get; set; }
-		private bool isVisible;
-		public bool IsVisible
+		private bool? isVisible;
+		public bool? IsVisible
 		{
 			get => isVisible;
 			set
@@ -19,7 +19,7 @@ namespace OxyTest.ViewModels.GridVIews.Internals
 				if (isVisible != value)
 				{
 					isVisible = value;
-					NotifyPropertyChanged("IsVisible");
+					NotifyPropertyChanged(nameof(IsVisible));
 				}
 			}
 		}

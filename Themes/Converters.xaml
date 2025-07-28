@@ -8,6 +8,7 @@
 	<converters:ValueTypeToStringConverter x:Key="ValueTypeToStringConverter"/>
     <converters:PlotModeToStringConverter x:Key="PlotModeToStringConverter"/>
     <converters:IsSingleYConverter x:Key="IsSingleYConverter"/>
+    <converters:CursorTypeToBooleanConverter x:Key="CursorTypeToBooleanConverter"/>
 </ResourceDictionary>
 
 <!--<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"

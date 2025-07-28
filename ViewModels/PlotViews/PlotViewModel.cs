@@ -1,8 +1,10 @@
 ﻿using DevExpress.Mvvm;
 using OxyPlot;
+using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyTest.Composition;
 using OxyTest.Models.Graph;
+using OxyTest.Services;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -14,17 +16,30 @@ namespace OxyTest.ViewModels
     {
         private GraphCore GraphCore { get; }
         public PlotModel PlotModel { get; }
+        public PlotControllerBuilder PlotControllerBuilder { get; }
+        public PlotController PlotController { get; }
 
         private GraphModel CurrentItem = new GraphModel();
+
+        private LineAnnotation MeasurementCursor { get; set; }
+
+        private LineAnnotation PivotCursor { get; set; }
+
+        private LineAnnotation TargetCursor { get; set; }
+
+        
         public PlotViewModel(GraphCore graphCore)
         {
             GraphCore = graphCore;
             PlotModel = new PlotModel();
+            
             SetDefaultAxis(PlotModel);
+
+            PlotControllerBuilder = graphCore.PlotControllerBuilder;
+            PlotController = GraphCore.PlotControllerBuilder.SetController(PlotModel, MeasurementCursor, PivotCursor, TargetCursor);
 
             //update 등록
             GraphCore.SubscribeModelUpdates(UpdatePlotModel);
-
 
             var GraphData = graphCore.GraphData;
             GraphData.Graphs_CollectionChanged += OnGraphCollectionChanged;
@@ -44,9 +59,22 @@ namespace OxyTest.ViewModels
                     case nameof(GraphData.Xaxis_LabelVisible):
                         OnXAxis_LabelChanged(GraphData.Xaxis_LabelVisible);
                         break;
+                    case nameof(GraphData.GridLineVisible):
+                        OnGridLineVisibleChanged(GraphData.GridLineVisible);
+                        break;
                 }
             };
 
+            XAxis.AxisChanged += (s, e) =>
+            {
+                if(graphCore.GraphProcessor.eLOCAL_STATUS != eLOCAL_STATUS.LIVEUPDATE)
+                {
+                    foreach (var graph in GraphData.Graphs)
+                    {
+                        graph.UpdatePlotData(XAxis);
+                    }
+                }
+            };
         }
 
         private string XAxis_Title { get; } = "Time(s)";
@@ -69,13 +97,12 @@ namespace OxyTest.ViewModels
             }
         }
 
-
-
         private void SetDefaultAxis(PlotModel model)
         {
             XAxis.Position = AxisPosition.Bottom;
             XAxis.Title = XAxis_Title;
-
+            XAxis.Title = XAxis_Title;
+            XAxis.Key = "XAXIS";
             XAxis.MajorGridlineStyle = LineStyle.Solid;
             XAxis.MinorGridlineStyle = LineStyle.Dot;
             XAxis.MajorGridlineColor = OxyColor.FromAColor(64, OxyColors.Black);
@@ -83,6 +110,46 @@ namespace OxyTest.ViewModels
             XAxis.Zoom(0, 10);
             model.Axes.Add(XAxis);
 
+            MeasurementCursor = new LineAnnotation
+            {
+                Type = LineAnnotationType.Vertical,
+                XAxisKey = XAxis.Key,
+                Layer = AnnotationLayer.AboveSeries,
+                LineStyle = LineStyle.Solid,
+                StrokeThickness = 2,
+                Color = OxyColors.Black
+            };
+            PivotCursor = new LineAnnotation
+            {
+                Type = LineAnnotationType.Vertical,
+                XAxisKey = XAxis.Key,
+                Layer = AnnotationLayer.AboveSeries,
+                LineStyle = LineStyle.Solid,
+                StrokeThickness = 2,
+                Color = OxyColors.Black,
+                Text = "Pivot",
+                TextOrientation = AnnotationTextOrientation.Horizontal,
+                TextVerticalAlignment = VerticalAlignment.Top,
+                TextHorizontalAlignment = HorizontalAlignment.Right,
+                TextPadding = 3,
+                TextMargin = 2
+            };
+
+            TargetCursor = new LineAnnotation
+            {
+                Type = LineAnnotationType.Vertical,
+                XAxisKey = XAxis.Key,
+                Layer = AnnotationLayer.AboveSeries,
+                LineStyle = LineStyle.Solid,
+                StrokeThickness = 2,
+                Color = OxyColors.Black,
+                Text = "Target",
+                TextOrientation = AnnotationTextOrientation.Horizontal,
+                TextVerticalAlignment = VerticalAlignment.Top,
+                TextHorizontalAlignment = HorizontalAlignment.Right,
+                TextPadding = 3,
+                TextMargin = 2
+            };
         }
 
         private void UpdatePlotModel()
@@ -145,7 +212,7 @@ namespace OxyTest.ViewModels
 
             //page type 에 따른 view 분기처리
             SetAxisPosition(PageType);            
-            PlotModel.InvalidatePlot(false);
+            PlotModel.InvalidatePlot(true);
         }
 
         private void OnRenderModelChanged(object sender, PropertyChangedEventArgs e) //render model => gridcontrol에서 뭔가 변경되는 경우를 감지하여 받아옴
@@ -225,12 +292,12 @@ namespace OxyTest.ViewModels
         {
             if(CurrentItem != null)
             {
-                var yAxes = PlotModel.Axes.Where(x => x.Position == AxisPosition.Left);
-                foreach (var axis in yAxes)
+                foreach(var graphModel in GraphCore.GraphData.Graphs)
                 {
-                    resetAxis(axis);
-                    if (axis.Tag == CurrentItem.Tag) axis.IsAxisVisible = true;
-                    else axis.IsAxisVisible = false;
+                    var renderModel = graphModel.GraphRenderModel;
+                    ResetYAxis(renderModel);
+                    if (renderModel.YAxis.Tag == CurrentItem.Tag) renderModel.YAxis.IsAxisVisible = true;
+                    else renderModel.YAxis.IsAxisVisible = false;
                 }
                 PlotModel.InvalidatePlot(false);
             }
@@ -242,17 +309,16 @@ namespace OxyTest.ViewModels
             if(CurrentItem != null)
             {
                 int idx = 1;
-                var yAxes = PlotModel.Axes.Where(x => x.Position == AxisPosition.Left);
-                foreach(var axis in yAxes)
+                foreach(var graphModel in GraphCore.GraphData.Graphs)
                 {
-                    resetAxis(axis);
-                    if (axis.Tag == CurrentItem.Tag) axis.PositionTier = 0;
+                    var renderModel = graphModel.GraphRenderModel;
+                    ResetYAxis(renderModel);
+                    if (renderModel.YAxis.Tag == CurrentItem.Tag) renderModel.YAxis.PositionTier = 0;
                     else
                     {
-                        axis.PositionTier = idx++;
+                        renderModel.YAxis.PositionTier = idx++;
+                        renderModel.SetGridLineVisible(false);
                     }
-                        
-                       
                 }
                 PlotModel.InvalidatePlot(false);
             }
@@ -262,27 +328,27 @@ namespace OxyTest.ViewModels
         {
             if(CurrentItem != null)
             {
-                var yaxes = PlotModel.Axes.Where(x => x.Position == AxisPosition.Left && x.IsAxisVisible == true).ToArray();
-                int cnt = yaxes.Count();
+                var graphs = GraphCore.GraphData.Graphs;
+                int cnt = graphs.Count();
                 int reverseIdx = cnt;
                 for(int i = 0; i < cnt; i++)
                 {
-                    resetAxis(yaxes[--reverseIdx]);
-                    yaxes[reverseIdx].StartPosition = (double)i / cnt;
-                    yaxes[reverseIdx].EndPosition = (double)(i + 1) / cnt;
-                    
+                    var renderModel = graphs[--reverseIdx].GraphRenderModel;
+                    ResetYAxis(renderModel);
+                    renderModel.YAxis.StartPosition = (double)i / cnt;
+                    renderModel.YAxis.EndPosition = (double)(i + 1) / cnt;
                 }
                 PlotModel.InvalidatePlot(false);
             }
         }
 
-        private Axis resetAxis(Axis YAxis)
+        private void ResetYAxis(GraphRenderModel renderModel)
         {
-            YAxis.IsAxisVisible = true;
-            YAxis.PositionTier = 0;
-            YAxis.StartPosition = 0;
-            YAxis.EndPosition = 1;
-            return YAxis;
+            renderModel.YAxis.IsAxisVisible = renderModel.Visible;
+            renderModel.YAxis.PositionTier = 0;
+            renderModel.YAxis.StartPosition = 0;
+            renderModel.YAxis.EndPosition = 1;
+            renderModel.SetGridLineVisible(GraphCore.GraphData.GridLineVisible);
         }
 
         private void OnXAxis_LabelChanged(bool isVisible)
@@ -294,6 +360,21 @@ namespace OxyTest.ViewModels
             else
             {
                 XAxis.Title = string.Empty;
+            }
+            PlotModel.InvalidatePlot(false);
+        }
+
+        private void OnGridLineVisibleChanged(bool visible)
+        {
+            if (visible)
+            {
+                XAxis.MajorGridlineStyle = LineStyle.Solid;
+                XAxis.MinorGridlineStyle = LineStyle.Dot;
+            }
+            else
+            {
+                XAxis.MajorGridlineStyle = LineStyle.None;
+                XAxis.MinorGridlineStyle = LineStyle.None;
             }
             PlotModel.InvalidatePlot(false);
         }

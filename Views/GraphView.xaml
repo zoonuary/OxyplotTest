@@ -43,10 +43,14 @@
 														RelativeSource={RelativeSource AncestorType=UserControl}, 
 														Converter={StaticResource PlayModeToEnabledConverter}}"/>-->
 
-                        <dxb:BarButtonItem Content="Start" Command="{Binding CMD_START}"
+                        <dxb:BarCheckItem Content="Start" Command="{Binding CMD_START}"
                                           ToolTip="Start Updating Graph"
+                                          GroupIndex="0" 
                                           />
-                        <dxb:BarButtonItem Content="Stop" Command="{Binding CMD_STOP}"/>
+                        <dxb:BarCheckItem Content="Stop" Command="{Binding CMD_STOP}"
+                                          ToolTip="Stop Updating Graph"
+                                          GroupIndex="0"
+                                          />
                         <dxb:BarButtonItem Content="clear"/>
 
                         <dxb:BarItemLinkSeparator/>
@@ -76,10 +80,21 @@
                             </dxb:PopupMenu>
                         </dxb:BarSplitCheckItem>
 
-                        <dxb:BarItemLinkSeparator/>
+                        <dxb:BarCheckItem Content="GridLineVisible" IsChecked="{Binding GraphCore.GraphData.GridLineVisible, Mode=TwoWay}"/>
 
-                        <dxb:BarCheckItem Content="Measuring Cursor"/>
-                        <dxb:BarCheckItem Content="Diff Cursor"/>
+                        <dxb:BarItemLinkSeparator/>
+                        <dxb:BarCheckItem Content="Default Cursor" GroupIndex="1" 
+                                          ToolTip="set default cursor" ToolTipService.ShowOnDisabled="True"
+                                          IsChecked="{Binding GraphCore.GraphData.CursorType, Converter={StaticResource CursorTypeToBooleanConverter}, ConverterParameter=DEFAULT, Mode=TwoWay}"/>
+                        
+                        <dxb:BarCheckItem Content="Measuring Cursor" GroupIndex="1"
+                                          ToolTip="set default cursor" ToolTipService.ShowOnDisabled="True"
+                                          IsChecked="{Binding GraphCore.GraphData.CursorType, Converter={StaticResource CursorTypeToBooleanConverter}, ConverterParameter=MEASUERMENT, Mode=TwoWay}"/>
+                        
+                        <dxb:BarCheckItem Content="Diff Cursor" GroupIndex="1"
+                                          ToolTip="set default cursor" ToolTipService.ShowOnDisabled="True"
+                                          IsChecked="{Binding GraphCore.GraphData.CursorType, Converter={StaticResource CursorTypeToBooleanConverter}, ConverterParameter=DIFFERENCE, Mode=TwoWay}"/>
+
                     </dxb:Bar.Items>
                 </dxb:Bar>
             </dxb:BarManager.Bars>

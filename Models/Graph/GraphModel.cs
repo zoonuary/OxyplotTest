@@ -138,23 +138,46 @@ namespace OxyTest.Models.Graph
 			}	
 		}
 
-		public void PushListToRenderModel()
+		private void PushUpdatesToRenderModel(double minTime, double maxTime)
 		{
-			List<GraphDataPoint> Snapshot;
-			lock (_listLock) //Todo : raw / physical mode에 따른 분기처리 필요
-			{
-				//var rawDataSnapshot = rawDataSource.ToList();
-				//var physicalDataSnapshot = physicalDataSource.ToList();
-				Snapshot = physicalDataSource.ToList();
+			List<GraphDataPoint> snapshot;
+			
+			if(rawDataSource.Count > 0 && minTime < rawDataSource[0].X && minTime >= 0)
+            {
+				//Todo : 중간에 생성된 그래프는 다시 로드할 수 있도록 방편 마련해야함
+				//Todo : 추가로, 시간이 길어질 수록 앞 데이터는 buffer에서도 사라짐으로, 가지고있는 리스트의 시간보다 작은 시간을 원하는지 확인해서 가져와야함.
 			}
 
-			//todo : 보여지는 부분만 별도의 연산처리 필요
-			GraphRenderModel.UpdateSeries(Snapshot);
+
+			switch (ValueType)
+			{
+				case eVALUE_TYPE.RAW:
+					lock (_listLock)
+					{
+						snapshot = rawDataSource.Where(datapoint => minTime < datapoint.X && datapoint.X < maxTime).ToList();
+					}
+					GraphRenderModel.UpdateSeries(snapshot);
+					break;
+				case eVALUE_TYPE.PHYSICAL:
+					lock (_listLock)
+					{
+						snapshot = physicalDataSource.Where(datapoint => minTime < datapoint.X && datapoint.X < maxTime).ToList();
+					}
+					GraphRenderModel.UpdateSeries(snapshot);
+					break;
+			}
 		}
 
+		public void UpdatePlotData(Axis sender) //value type 에 따라 달라진 값 푸시
+        {
+			double defaultOffset = 2.0;//확대했을때 좌우 끊김 현상을 방지하기위해 좌우로 좀 더 가져옴
+			PushUpdatesToRenderModel(sender.ActualMinimum - defaultOffset, sender.ActualMaximum + defaultOffset);
+        }
 
-		//public IReadOnlyList<GraphDataPoint> RawDataSource => rawDataSource;
-		//public IReadOnlyList<GraphDataPoint> PhysicalDataSource => physicalDataSource;
+		public void UpdatePlotData(double minTime, double maxTime)
+        {
+			PushUpdatesToRenderModel(minTime, maxTime);
+		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
 		private void NotifyPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

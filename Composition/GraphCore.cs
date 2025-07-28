@@ -12,11 +12,11 @@ namespace OxyTest.Composition
 	public class GraphCore
 	{
 		public Visual MainVisual { get; }
-
 		public GraphData GraphData { get; }
 		public GraphProcessor GraphProcessor { get; }
 		public DialogService DialogService { get; }
 		public PageNavigationService NavigationService { get; }
+		public PlotControllerBuilder PlotControllerBuilder { get; }
 
 		public GraphCore(Visual visual)
 		{
@@ -26,6 +26,7 @@ namespace OxyTest.Composition
 			GraphProcessor = new GraphProcessor(GraphData);
 			DialogService = new DialogService(MainVisual);
 			NavigationService = new PageNavigationService(this);
+			PlotControllerBuilder = new PlotControllerBuilder(GraphData);
 		}
 
 		/// <summary>

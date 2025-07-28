@@ -443,6 +443,24 @@ namespace OxyTest.Models.Graph
             }
         }
 
+        public void SetGridLineVisible(bool visibility)
+        {
+            if (visibility)
+            {
+                YAxis_Physical.MajorGridlineStyle = LineStyle.Solid;
+                YAxis_Physical.MinorGridlineStyle = LineStyle.Dot;
+                YAxis_Raw.MajorGridlineStyle = LineStyle.Solid;
+                YAxis_Raw.MinorGridlineStyle = LineStyle.Dot;
+            }
+            else
+            {
+                YAxis_Physical.MajorGridlineStyle = LineStyle.None;
+                YAxis_Physical.MinorGridlineStyle = LineStyle.None;
+                YAxis_Raw.MajorGridlineStyle = LineStyle.None;
+                YAxis_Raw.MinorGridlineStyle = LineStyle.None;
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
         private void NotifyPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }

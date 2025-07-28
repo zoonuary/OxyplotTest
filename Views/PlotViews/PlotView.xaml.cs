@@ -1,4 +1,5 @@
 ﻿using DevExpress.Mvvm;
+using OxyTest.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,18 @@ namespace OxyTest.Views
         public PlotView()
         {
             InitializeComponent();
+
+            DataContextChanged += (s, e) =>
+            {
+                if(DataContext is PlotViewModel viewmodel)
+                {
+                    plotview.AddHandler(UIElement.MouseMoveEvent, new MouseEventHandler((s, e) =>
+                    {
+                        var position = e.GetPosition(plotview);
+                        viewmodel.PlotControllerBuilder.OnMeasureCursorMove(position.X);
+                    }), true);
+                }
+            };
         }
     }
 }

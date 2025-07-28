@@ -21,8 +21,10 @@ namespace OxyTest.Data
 		private void Initialize()
         {
 			pageType = ePAGE_TYPE.SINGLE_Y;
+			CursorType = eCURSOR_TYPE.DEFAULT;
 			Yaxis_LabelVisible = true;
 			Xaxis_LabelVisible = true;
+			GridLineVisible = true;
         }
 
 		private ePAGE_TYPE pageType;
@@ -35,6 +37,20 @@ namespace OxyTest.Data
                 {
 					pageType = value;
 					NotifyPropertyChanged(nameof(PageType));
+                }
+            }
+        }
+
+		private eCURSOR_TYPE cursorType;
+		public eCURSOR_TYPE CursorType
+        {
+			get => cursorType;
+            set
+            {
+				if(cursorType != value)
+                {
+					cursorType = value;
+					NotifyPropertyChanged(nameof(CursorType));
                 }
             }
         }
@@ -56,6 +72,7 @@ namespace OxyTest.Data
                 }
             }
         }
+
 		private bool xaxis_labelVisible;
 		public bool Xaxis_LabelVisible
         {
@@ -67,6 +84,24 @@ namespace OxyTest.Data
 					xaxis_labelVisible = value;
 					NotifyPropertyChanged(nameof(Xaxis_LabelVisible));
                 }
+            }
+        }
+
+		private bool gridLineVisible;
+		public bool GridLineVisible
+		{
+			get => gridLineVisible;
+            set
+            {
+				if(gridLineVisible != value)
+                {
+					gridLineVisible = value;
+					foreach (var graph in Graphs)
+					{
+						graph.GraphRenderModel.SetGridLineVisible(value);
+					}
+					NotifyPropertyChanged(nameof(GridLineVisible));
+				}
             }
         }
 
@@ -85,7 +120,6 @@ namespace OxyTest.Data
 				}
 			}
 		}
-
 
 		private readonly List<GraphModel> graphs = new List<GraphModel>();
 		public List<GraphModel> Graphs

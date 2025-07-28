@@ -74,12 +74,12 @@ namespace OxyTest.Events
 			//============================== 수신 이벤트 처리
 			Start += (s, e) =>
 			{
-
+				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.START));
 			};
 
 			Stop += (s, e) =>
 			{
-
+				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.STOP));
 			};
 
 			OnEventData += (s, e) =>

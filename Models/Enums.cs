@@ -15,6 +15,13 @@ namespace OxyTest
 		DBC_UPDATED
 	}
 
+	public enum eLOCAL_STATUS
+    {
+		LIVEUPDATE,
+		PAUSED,
+		STOPPED
+    }
+
 	//plot mode
 	public enum ePLOT_MODE 
 	{ 
@@ -33,12 +40,21 @@ namespace OxyTest
 		SEPARATE_Y
 	}
 
+	//plotview cursor type
+	public enum eCURSOR_TYPE
+    {
+		DEFAULT,
+		MEASUERMENT,
+		DIFFERENCE
+    }
+
 	//value Type
 	public enum eVALUE_TYPE
 	{
 		RAW,
 		PHYSICAL,
 	}
+
 	//class Enums
 	//{
 	//}

@@ -54,17 +54,11 @@ namespace OxyTest.Views
 		//Graph plot 내부 NavigationFrame 초기화 및 초기 화면(SINGLE_Y)으로 로드
 		private void Initialize_GraphPlotContainer(GraphCore core)
 		{
-#if true  //1 plot view 테스트코드
 			var plotview = new PlotView()
 			{
 				DataContext = new PlotViewModel(core)
 			};
 			GraphPlotContainer.Children.Add(plotview);
-#else
-
-			GraphPlotContainer.Children.Add(core.NavigationService.NavigationFrame);
-			core.NavigationService.Navigate(ePAGE_TYPE.SINGLE_Y); // => viewmodel에서 navigate하여 상태 변경하도록 수정
-#endif
 		}
 
 		//Gridview 생성 및 초기화

@@ -23,16 +23,15 @@ namespace OxyTest.ViewModels
             GraphCore = graphCore;
             GridViewModel = gridViewModel;
 
-            CMD_START = new DelegateCommand(() => GraphCore.GraphProcessor.StartProcess());
-            CMD_STOP = new DelegateCommand(() => GraphCore.GraphProcessor.StopProcess());
+            CMD_START = new DelegateCommand(() => GraphCore.GraphProcessor.eLOCAL_STATUS = eLOCAL_STATUS.LIVEUPDATE);
+            CMD_STOP = new DelegateCommand(() => GraphCore.GraphProcessor.eLOCAL_STATUS = eLOCAL_STATUS.PAUSED);
+
             //----------------------------------------
             CMD_AppendGraph = new DelegateCommand(OpenSignalAddDialog);
             CMD_RemoveGraph = new DelegateCommand(OnSignalsRemoved);
             CMD_ClearGraph = new DelegateCommand(OnSignalsCleared);
             CMD_ShowRawValues = new DelegateCommand(OnShowRawValues);
             CMD_ShowPhysicalValues = new DelegateCommand(OnShowPhysicalValues);
-            
-
             //----------------------------------------
             CMD_ViewTypeChanged = new DelegateCommand<object>(OnViewTypeChanged);
         }

@@ -84,6 +84,7 @@
     <Compile Include="Composition\GraphCore.cs" />
     <Compile Include="Converters\ColorToBrushConverter.cs" />
     <Compile Include="Converters\ColumnVisibilityConverter.cs" />
+    <Compile Include="Converters\CursorTypeToBooleanConverter.cs" />
     <Compile Include="Converters\IsSingleYConverter.cs" />
     <Compile Include="Converters\PlotModeToStringConverter.cs" />
     <Compile Include="Converters\ValueTypeToStringConverter.cs" />
@@ -113,6 +114,7 @@
     <Compile Include="Services\GraphProcessor.cs" />
     <Compile Include="Services\GraphRenderLoop.cs" />
     <Compile Include="Services\PageNavigationService.cs" />
+    <Compile Include="Services\PlotControllerBuilder.cs" />
     <Compile Include="Utils\BoundedQueue.cs" />
     <Compile Include="ViewModels\Dialogs\SignalAddConfirmDialogViewModel.cs" />
     <Compile Include="ViewModels\Dialogs\SignalAddDialogViewModel.cs" />
@@ -120,6 +122,7 @@
     <Compile Include="ViewModels\GridViews\GridViewModel.cs" />
     <Compile Include="ViewModels\GridViews\Internals\ColumnSetting.cs" />
     <Compile Include="ViewModels\GridViews\Internals\GridPlotType.cs" />
+    <Compile Include="ViewModels\GridViews\Internals\GridPopupHelper.cs" />
     <Compile Include="ViewModels\GridViews\Internals\GridValueType.cs" />
     <Compile Include="ViewModels\GridViews\Internals\SelectedItemsBehavior.cs" />
     <Compile Include="ViewModels\PlotViews\PlotViewModel.cs" />
