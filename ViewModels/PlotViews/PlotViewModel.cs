@@ -2,10 +2,16 @@
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
+using OxyPlot.Series;
 using OxyTest.Composition;
+using OxyTest.Data;
+using OxyTest.Events;
+using OxyTest.Models.Event;
 using OxyTest.Models.Graph;
 using OxyTest.Services;
+using OxyTest.ViewModels.PlotViews.Internals;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Media;
@@ -15,33 +21,36 @@ namespace OxyTest.ViewModels
     public class PlotViewModel : ViewModelBase
     {
         private GraphCore GraphCore { get; }
+        private GraphData GraphData { get; }
         public PlotModel PlotModel { get; }
+
+        //internal classes
+        public LayoutManager LayoutManager { get; }
+        public CursorManager CursorManager { get; }
         public PlotControllerBuilder PlotControllerBuilder { get; }
-        public PlotController PlotController { get; }
+        public PlotController PlotController { get; } //xaml에 바인딩됨
 
         private GraphModel CurrentItem = new GraphModel();
 
-        private LineAnnotation MeasurementCursor { get; set; }
-
-        private LineAnnotation PivotCursor { get; set; }
-
-        private LineAnnotation TargetCursor { get; set; }
-
-        
         public PlotViewModel(GraphCore graphCore)
         {
             GraphCore = graphCore;
             PlotModel = new PlotModel();
             
             SetDefaultAxis(PlotModel);
-
-            PlotControllerBuilder = graphCore.PlotControllerBuilder;
-            PlotController = GraphCore.PlotControllerBuilder.SetController(PlotModel, MeasurementCursor, PivotCursor, TargetCursor);
+            LayoutManager = new LayoutManager(GraphCore);
+            CursorManager = new CursorManager(PlotModel, XAxis);
+            PlotControllerBuilder = new PlotControllerBuilder(GraphCore, CursorManager);
+            PlotController = PlotControllerBuilder.SetController(PlotModel);
 
             //update 등록
-            GraphCore.SubscribeModelUpdates(UpdatePlotModel);
+            GraphCore.GraphProcessor.RegisterCallbackAction(UpdatePlotModel);
 
-            var GraphData = graphCore.GraphData;
+
+            //동기화 등록
+            GraphCore.GraphProcessor.RegiscatCalbackAction_GraphSync(UpdateSync);
+
+            GraphData = GraphCore.GraphData;
             GraphData.Graphs_CollectionChanged += OnGraphCollectionChanged;
             GraphData.PropertyChanged += (s, e) =>
             {
@@ -53,32 +62,59 @@ namespace OxyTest.ViewModels
                     case nameof(GraphData.PageType):
                         PageType = GraphData.PageType;
                         break;
+                    case nameof(GraphData.CursorType):
+                        CursorType = GraphData.CursorType;
+                        break;
                     case nameof(GraphData.Yaxis_LabelVisible):
                         PlotModel.InvalidatePlot(false);
                         break;
                     case nameof(GraphData.Xaxis_LabelVisible):
-                        OnXAxis_LabelChanged(GraphData.Xaxis_LabelVisible);
+                        if (GraphData.Xaxis_LabelVisible)
+                            XAxis.Title = XAxis_Title;
+                        else
+                            XAxis.Title = string.Empty;
+                        PlotModel.InvalidatePlot(false);
                         break;
                     case nameof(GraphData.GridLineVisible):
-                        OnGridLineVisibleChanged(GraphData.GridLineVisible);
+                        if (GraphData.GridLineVisible)
+                        {
+                            XAxis.MajorGridlineStyle = LineStyle.Solid;
+                            XAxis.MinorGridlineStyle = LineStyle.Dot;
+                        }
+                        else
+                        {
+                            XAxis.MajorGridlineStyle = LineStyle.None;
+                            XAxis.MinorGridlineStyle = LineStyle.None;
+                        }
+                        PlotModel.InvalidatePlot(false);
+                        break;
+                    case nameof(GraphData.Xaxis_isFitMode):
+                        if (GraphData.Xaxis_isFitMode)
+                        {
+                            UpdatePlotModel(GraphCore.GraphProcessor.LastEventTime);
+                        }
                         break;
                 }
             };
 
             XAxis.AxisChanged += (s, e) =>
             {
-                if(graphCore.GraphProcessor.eLOCAL_STATUS != eLOCAL_STATUS.LIVEUPDATE)
+                foreach (var graph in GraphData.Graphs)
                 {
-                    foreach (var graph in GraphData.Graphs)
-                    {
-                        graph.UpdatePlotData(XAxis);
-                    }
+                    graph.UpdatePlotData(XAxis);
                 }
+
+                
+
+                //if (graphCore.GraphProcessor.eLOCAL_STATUS != eLOCAL_STATUS.LIVEUPDATE)
+                //{
+
+                //}
             };
         }
 
         private string XAxis_Title { get; } = "Time(s)";
-        public LinearAxis XAxis { get; } = new LinearAxis();
+        public LinearAxis XAxis { get; } = new LinearAxis { Key = Guid.NewGuid().ToString() };
 
         private ePAGE_TYPE pageType;
         private ePAGE_TYPE PageType
@@ -92,7 +128,26 @@ namespace OxyTest.ViewModels
                 if (pageType != value)
                 {
                     pageType = value;
-                    SetAxisPosition(value);
+                    LayoutManager.SetLayout(value, CurrentItem);
+                    SetCursor();
+                    PlotModel.InvalidatePlot(true);
+                }
+            }
+        }
+
+        private eCURSOR_TYPE cursorType;
+        private eCURSOR_TYPE CursorType
+        {
+            get
+            {
+                return cursorType;
+            }
+            set
+            {
+                if(cursorType != value)
+                {
+                    cursorType = value;
+                    SetCursor();
                 }
             }
         }
@@ -102,79 +157,83 @@ namespace OxyTest.ViewModels
             XAxis.Position = AxisPosition.Bottom;
             XAxis.Title = XAxis_Title;
             XAxis.Title = XAxis_Title;
-            XAxis.Key = "XAXIS";
             XAxis.MajorGridlineStyle = LineStyle.Solid;
             XAxis.MinorGridlineStyle = LineStyle.Dot;
             XAxis.MajorGridlineColor = OxyColor.FromAColor(64, OxyColors.Black);
             XAxis.MinorGridlineColor = OxyColor.FromAColor(32, OxyColors.Black);
             XAxis.Zoom(0, 10);
+
+            var yaxis = new LinearAxis
+            {
+                Position = AxisPosition.Left,
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineColor = OxyColor.FromAColor(64, OxyColors.Black),
+                MinorGridlineColor = OxyColor.FromAColor(32, OxyColors.Black)
+            };
+            yaxis.Zoom(0, 10);
             model.Axes.Add(XAxis);
-
-            MeasurementCursor = new LineAnnotation
-            {
-                Type = LineAnnotationType.Vertical,
-                XAxisKey = XAxis.Key,
-                Layer = AnnotationLayer.AboveSeries,
-                LineStyle = LineStyle.Solid,
-                StrokeThickness = 2,
-                Color = OxyColors.Black
-            };
-            PivotCursor = new LineAnnotation
-            {
-                Type = LineAnnotationType.Vertical,
-                XAxisKey = XAxis.Key,
-                Layer = AnnotationLayer.AboveSeries,
-                LineStyle = LineStyle.Solid,
-                StrokeThickness = 2,
-                Color = OxyColors.Black,
-                Text = "Pivot",
-                TextOrientation = AnnotationTextOrientation.Horizontal,
-                TextVerticalAlignment = VerticalAlignment.Top,
-                TextHorizontalAlignment = HorizontalAlignment.Right,
-                TextPadding = 3,
-                TextMargin = 2
-            };
-
-            TargetCursor = new LineAnnotation
-            {
-                Type = LineAnnotationType.Vertical,
-                XAxisKey = XAxis.Key,
-                Layer = AnnotationLayer.AboveSeries,
-                LineStyle = LineStyle.Solid,
-                StrokeThickness = 2,
-                Color = OxyColors.Black,
-                Text = "Target",
-                TextOrientation = AnnotationTextOrientation.Horizontal,
-                TextVerticalAlignment = VerticalAlignment.Top,
-                TextHorizontalAlignment = HorizontalAlignment.Right,
-                TextPadding = 3,
-                TextMargin = 2
-            };
+            //model.Axes.Add(yaxis); //성능 문제로 제거
         }
 
-        private void UpdatePlotModel()
+        private void UpdatePlotModel(double lastTime)
         {
             PlotModel.Series.Clear();
-            double lastTime = 0.0;
+            //double lastTime = 0.0;
 
-            foreach (var graphModel in GraphCore.GraphData.Graphs)
-            {
-                var renderModel = graphModel.GraphRenderModel;
-                PlotModel.Series.Add(renderModel.CurrentSeries);
-                if (renderModel.LastPoint != null && lastTime < renderModel.LastPoint.X)
-                    lastTime = graphModel.GraphRenderModel.LastPoint.X;
-            }
+            //foreach (var graphModel in GraphCore.GraphData.Graphs)
+            //{
+            //    var renderModel = graphModel.GraphRenderModel;
+            //    PlotModel.Series.Add(renderModel.CurrentSeries);
+            //    if (renderModel.LastPoint != null && lastTime < renderModel.LastPoint.X)
+            //        lastTime = graphModel.GraphRenderModel.LastPoint.X;
+            //}
 
-            if (lastTime > 8.0)
+            //get lasttime
+
+            if (GraphData.Xaxis_isFitMode)
             {
-                XAxis.Zoom(lastTime - 8.0, lastTime + 2.0);
+                var range = GraphData.Xaxis_DefaultFitRange;
+                if (lastTime <= range) 
+                { 
+                    XAxis.Zoom(0, lastTime);
+                }
+                else
+                {
+                    XAxis.Zoom(lastTime - range, lastTime);
+                }
             }
             else
             {
-                XAxis.Zoom(0, 10);
+                var range = GraphData.Xaxis_DefaultRange;
+                var margin = GraphData.Xaxis_DefualtMargin;
+                if(lastTime > (range - margin))
+                {
+                    XAxis.Zoom(lastTime - range, lastTime + margin);
+                }
+                else
+                {
+                    XAxis.Zoom(0, range);
+                }
+            }
+
+            foreach (var graph in GraphData.Graphs)
+            {
+                graph.UpdatePlotData(XAxis);
+                PlotModel.Series.Add(graph.GraphRenderModel.CurrentSeries);
             }
 
             PlotModel.InvalidatePlot(true);
+        }
+
+        private void UpdateSync(GraphSyncEventModel model)
+        {
+            if(model.Xaxis_ActualMaximum != XAxis.ActualMaximum
+                && model.Xaxis_ActualMinimum != XAxis.ActualMinimum)
+            {
+                XAxis.Zoom(model.Xaxis_ActualMinimum, model.Xaxis_ActualMaximum);
+                PlotModel.InvalidatePlot(false);
+            }
         }
 
         private void OnGraphCollectionChanged(object sender, EventArgs e)
@@ -182,19 +241,24 @@ namespace OxyTest.ViewModels
             //axis 추가
             PlotModel.Axes.Clear();
             PlotModel.Axes.Add(XAxis);
-            foreach (var graph in GraphCore.GraphData.Graphs)
+
+            var Graphs = GraphCore.GraphData.Graphs;
+            foreach (var graph in Graphs)
             {
                 PlotModel.Axes.Add(graph.GraphRenderModel.YAxis);
             }
-            SetAxisPosition(PageType);
+            LayoutManager.SetLayout(PageType, CurrentItem);
 
             //data 추가
             PlotModel.Series.Clear();
-            foreach(var graphModel in GraphCore.GraphData.Graphs)
+            foreach(var graphModel in Graphs)
             {
                 var renderModel = graphModel.GraphRenderModel;
                 PlotModel.Series.Add(renderModel.CurrentSeries);
             }
+
+            CursorManager.OnGraphCollectionChanged(Graphs);
+            SetCursor();
 
             PlotModel.InvalidatePlot(true);
         }
@@ -211,7 +275,7 @@ namespace OxyTest.ViewModels
             ChangeAxisColor(XAxis, CurrentItem.GraphRenderModel.BaseColor);
 
             //page type 에 따른 view 분기처리
-            SetAxisPosition(PageType);            
+            LayoutManager.SetLayout(PageType, CurrentItem);
             PlotModel.InvalidatePlot(true);
         }
 
@@ -238,7 +302,7 @@ namespace OxyTest.ViewModels
                         {
                             if(PageType == ePAGE_TYPE.SEPARATE_Y)
                             {
-                                SetSepaYPage(); //separate의 경우 하나 안 보일때마다 YAxis 높이 다시계산
+                                LayoutManager.SetLayout(PageType, CurrentItem); //separate의 경우 하나 안 보일때마다 YAxis 높이 다시계산
                             }
                             PlotModel.InvalidatePlot(true);
                         }
@@ -246,6 +310,11 @@ namespace OxyTest.ViewModels
                     case nameof(GraphRenderModel.PlotMode):
                         {
                             PlotModel.InvalidatePlot(true);
+                        }
+                        break;
+                    case nameof(GraphRenderModel.YAxis):
+                        {
+                            PlotModel.InvalidatePlot(false);
                         }
                         break;
                 }
@@ -270,113 +339,32 @@ namespace OxyTest.ViewModels
             
         }
 
-        private void SetAxisPosition(ePAGE_TYPE pageType)
+        private void SetCursor()
         {
-            switch (pageType)
+            PlotModel.Annotations.Clear();
+            switch (CursorType)
             {
-                case ePAGE_TYPE.SINGLE_Y:
-                    SetSingleYPage();
+                case eCURSOR_TYPE.DEFAULT:
                     break;
-                case ePAGE_TYPE.MULTIPLE_Y:
-                    SetMultiYPage();
-                    break;
-                case ePAGE_TYPE.SEPARATE_Y:
-                    SetSepaYPage();
-                    break;
-            }
-        }
-
-       
-
-        private void SetSingleYPage()
-        {
-            if(CurrentItem != null)
-            {
-                foreach(var graphModel in GraphCore.GraphData.Graphs)
-                {
-                    var renderModel = graphModel.GraphRenderModel;
-                    ResetYAxis(renderModel);
-                    if (renderModel.YAxis.Tag == CurrentItem.Tag) renderModel.YAxis.IsAxisVisible = true;
-                    else renderModel.YAxis.IsAxisVisible = false;
-                }
-                PlotModel.InvalidatePlot(false);
-            }
-            
-        }
-
-        private void SetMultiYPage()
-        {
-            if(CurrentItem != null)
-            {
-                int idx = 1;
-                foreach(var graphModel in GraphCore.GraphData.Graphs)
-                {
-                    var renderModel = graphModel.GraphRenderModel;
-                    ResetYAxis(renderModel);
-                    if (renderModel.YAxis.Tag == CurrentItem.Tag) renderModel.YAxis.PositionTier = 0;
-                    else
+                case eCURSOR_TYPE.MEASUERMENT:
+                    foreach (var cursor in CursorManager.GetMeasureLines(PageType))
                     {
-                        renderModel.YAxis.PositionTier = idx++;
-                        renderModel.SetGridLineVisible(false);
+                        PlotModel.Annotations.Add(cursor);
                     }
-                }
-                PlotModel.InvalidatePlot(false);
-            }
-        }
-
-        private void SetSepaYPage()
-        {
-            if(CurrentItem != null)
-            {
-                var graphs = GraphCore.GraphData.Graphs;
-                int cnt = graphs.Count();
-                int reverseIdx = cnt;
-                for(int i = 0; i < cnt; i++)
-                {
-                    var renderModel = graphs[--reverseIdx].GraphRenderModel;
-                    ResetYAxis(renderModel);
-                    renderModel.YAxis.StartPosition = (double)i / cnt;
-                    renderModel.YAxis.EndPosition = (double)(i + 1) / cnt;
-                }
-                PlotModel.InvalidatePlot(false);
-            }
-        }
-
-        private void ResetYAxis(GraphRenderModel renderModel)
-        {
-            renderModel.YAxis.IsAxisVisible = renderModel.Visible;
-            renderModel.YAxis.PositionTier = 0;
-            renderModel.YAxis.StartPosition = 0;
-            renderModel.YAxis.EndPosition = 1;
-            renderModel.SetGridLineVisible(GraphCore.GraphData.GridLineVisible);
-        }
-
-        private void OnXAxis_LabelChanged(bool isVisible)
-        {
-            if (isVisible)
-            {
-                XAxis.Title = XAxis_Title;
-            }
-            else
-            {
-                XAxis.Title = string.Empty;
+                    break;
+                case eCURSOR_TYPE.DIFFERENCE:
+                    foreach (var cursor in CursorManager.GetTargetLines(PageType))
+                    {
+                        PlotModel.Annotations.Add(cursor);
+                    }
+                    foreach (var cursor in CursorManager.GetPivotLines(PageType))
+                    {
+                        PlotModel.Annotations.Add(cursor);
+                    }
+                    break;
             }
             PlotModel.InvalidatePlot(false);
         }
 
-        private void OnGridLineVisibleChanged(bool visible)
-        {
-            if (visible)
-            {
-                XAxis.MajorGridlineStyle = LineStyle.Solid;
-                XAxis.MinorGridlineStyle = LineStyle.Dot;
-            }
-            else
-            {
-                XAxis.MajorGridlineStyle = LineStyle.None;
-                XAxis.MinorGridlineStyle = LineStyle.None;
-            }
-            PlotModel.InvalidatePlot(false);
-        }
     }
 }

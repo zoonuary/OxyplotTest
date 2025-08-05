@@ -1,5 +1,6 @@
 ﻿using HPT.Common.Models;
 using HPT.Common.Utils;
+using HPT.DBCParser.Parsers;
 using OxyTest.Models.Event;
 using System;
 using System.Collections.Generic;
@@ -74,6 +75,8 @@ namespace OxyTest.Events
 			//============================== 수신 이벤트 처리
 			Start += (s, e) =>
 			{
+				LocalBroadCaster.ClearBufferedMessages();
+				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.CLEAR));
 				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.START));
 			};
 
@@ -93,6 +96,7 @@ namespace OxyTest.Events
 						{
 							var message = new EventModel(eEVENT_BEHAVIOR_TYPE.ONEVENT, eventData.Type, canEventData.MsgId, canEventData.DLC, canEventData.Data, canEventData.TimeStamp, canEventData.IsExtended);
 							LocalBroadCaster.EnqueueEvent(message);
+							LocalBroadCaster.EnqueueMessageToBuffer(message);
 						}
 						break;
 
@@ -100,6 +104,7 @@ namespace OxyTest.Events
 					case EventType.CAN_FD_MESSAGE:
 						if (eventData is CanFdDataFrame canFDEventData)
 						{
+							//fd 메세지 추가 이벤트 추후에 더할것
 							//Models.StoredMessage message = new Models.StoredMessage(ePROTOCOL_TYPE.CANFD, canFDEventData.MsgId, canFDEventData.DLC, canFDEventData.Data, canFDEventData.TimeStamp, canFDEventData.IsExtended);
 							//GraphEventBroadCaster.AddStoredCANFDMessage(message);
 							//GraphEventBroadCaster.BroadCast(new GraphEventData { eventType = eGRAPH_EVENT_TYPE.ONEVENT, data = message });
@@ -110,8 +115,8 @@ namespace OxyTest.Events
 
 			DbcUpdated += (s, e) =>
 			{
-
-
+				LocalBroadCaster.SetReferencedDBCNames(DBCController.Instance.GetAllDatabase().Select(x => x.DBCName).ToList());
+				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.DBC_UPDATED));
 			};
 		}
 

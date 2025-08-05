@@ -1,5 +1,6 @@
 ﻿using DevExpress.Mvvm;
 using DevExpress.Xpf.Bars;
+using DevExpress.Xpf.Core.Commands;
 using DevExpress.Xpf.Grid;
 using OxyTest.Composition;
 using OxyTest.Models.Graph;
@@ -32,24 +33,28 @@ namespace OxyTest.ViewModels.GridViews.Internals
             BarButtonItem addPlotButton;
             BarButtonItem deletePlotButton;
             BarSubItem detailButton;
+            BarButtonItem fitYaxisBUtton;
 
             if (selectedItem != null)
             {
                 addPlotButton = CreateBarbuttonItem("Add Plot...", new DelegateCommand(() => GraphCore.DialogService.ShowSignalAddDialog((model) => GraphCore.GraphData.AddGraph(model))));
                 deletePlotButton = CreateBarbuttonItem("delete Plot", new DelegateCommand(() => GraphCore.GraphData.RemoveGraph(selectedItem)));
                 detailButton = CreateDetailSubItem("Details", selectedItem);
+                fitYaxisBUtton = CreateBarbuttonItem("Fit Y-Axis", new DelegateCommand(() => selectedItem.GraphRenderModel.FitYAxis()));
             }
             else
             {
                 addPlotButton = CreateBarbuttonItem("Add Plot...", new DelegateCommand(() => GraphCore.DialogService.ShowSignalAddDialog((model) => GraphCore.GraphData.AddGraph(model))));
                 deletePlotButton = CreateBarbuttonItem("delete Plot", null);
                 detailButton = CreateDetailSubItem("Details", null);
+                fitYaxisBUtton = CreateBarbuttonItem("Fit Y-Axis", null);
             }
 
 
             yield return addPlotButton;
             yield return deletePlotButton;
             yield return new BarItemLinkSeparator();
+            yield return fitYaxisBUtton;
             yield return detailButton;
             yield return new BarItemLinkSeparator();
         }
@@ -156,7 +161,7 @@ namespace OxyTest.ViewModels.GridViews.Internals
 
             var template = new DataTemplate(typeof(ColumnSetting));
             var checkBoxFactory = new FrameworkElementFactory(typeof(CheckBox));
-            checkBoxFactory.SetBinding(CheckBox.ContentProperty, new Binding(nameof(ColumnSetting.FieldName)));
+            checkBoxFactory.SetBinding(CheckBox.ContentProperty, new Binding(nameof(ColumnSetting.Header)));
             checkBoxFactory.SetBinding(CheckBox.IsCheckedProperty, new Binding(nameof(ColumnSetting.IsVisible)));
             checkBoxFactory.SetValue(CheckBox.PaddingProperty, new Thickness(8, 0, 0, 4));
             template.VisualTree = checkBoxFactory;

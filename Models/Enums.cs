@@ -11,6 +11,7 @@ namespace OxyTest
 	{
 		START,
 		STOP,
+		CLEAR,
 		ONEVENT,
 		DBC_UPDATED
 	}

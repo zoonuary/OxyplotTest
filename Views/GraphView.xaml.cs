@@ -33,22 +33,11 @@ namespace OxyTest.Views
 			var core = new GraphCore(this); //모듈에 필요한 주요 클래스 전부 로드
 			Resources.MergedDictionaries.Add(dictionary); //resource dictionary 추가.
 			InitializeComponent();
+
 			GridViewModel gridViewModel = Initialize_GridViewContainer(core);
 			Initialize_GraphPlotContainer(core);
 
 			DataContext = new GraphViewModel(core, gridViewModel);
-			//Loaded += (s, e) =>
-			//{
-			// // popup될 때마다 handle을 가져오도록 변경. 부모 window가 docking system임.
-			//	//============================== parent winform의 handle을 가져오고, core에 세팅.
-			//	var hwndSource = (HwndSource)PresentationSource.FromVisual(this);
-			//	if(hwndSource != null)
-			//	{
-			//		var elementHost = System.Windows.Forms.Control.FromChildHandle(hwndSource.Handle);
-			//		var winformHandle = elementHost?.FindForm()?.Handle ?? IntPtr.Zero;
-			//		core.InitializeWithHandle(winformHandle);
-			//	}
-			//};
 		}
 
 		//Graph plot 내부 NavigationFrame 초기화 및 초기 화면(SINGLE_Y)으로 로드

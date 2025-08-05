@@ -23,6 +23,7 @@ namespace OxyTest.ViewModels
             GraphCore = graphCore;
             GridViewModel = gridViewModel;
 
+            PageType = GraphCore.GraphData.PageType;
             CMD_START = new DelegateCommand(() => GraphCore.GraphProcessor.eLOCAL_STATUS = eLOCAL_STATUS.LIVEUPDATE);
             CMD_STOP = new DelegateCommand(() => GraphCore.GraphProcessor.eLOCAL_STATUS = eLOCAL_STATUS.PAUSED);
 
@@ -32,8 +33,6 @@ namespace OxyTest.ViewModels
             CMD_ClearGraph = new DelegateCommand(OnSignalsCleared);
             CMD_ShowRawValues = new DelegateCommand(OnShowRawValues);
             CMD_ShowPhysicalValues = new DelegateCommand(OnShowPhysicalValues);
-            //----------------------------------------
-            CMD_ViewTypeChanged = new DelegateCommand<object>(OnViewTypeChanged);
         }
 
         public ICommand CMD_START { get; }
@@ -46,9 +45,19 @@ namespace OxyTest.ViewModels
         public ICommand CMD_ShowRawValues { get; }
         public ICommand CMD_ShowPhysicalValues { get; }
 
-        //---------------------------------------
-        public ICommand CMD_ViewTypeChanged { get; }
-
+        private ePAGE_TYPE pagetype;
+        public ePAGE_TYPE PageType
+        {
+            get => pagetype;
+            set
+            {
+                if(pagetype != value)
+                {
+                    pagetype = value;
+                    GraphCore.GraphData.PageType = pagetype;
+                }
+            }
+        }
 
         public void OpenSignalAddDialog()
         {
@@ -91,14 +100,5 @@ namespace OxyTest.ViewModels
                 graph.ValueType = eVALUE_TYPE.PHYSICAL;
             }
         }
-
-        private void OnViewTypeChanged(object param)
-        {
-            if (param is string s && Enum.TryParse<ePAGE_TYPE>(s, out var viewType))
-            {
-                GraphCore.GraphData.PageType = viewType;
-            }
-        }
-        
     }
 }

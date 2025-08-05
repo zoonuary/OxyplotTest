@@ -86,6 +86,7 @@
     <Compile Include="Converters\ColumnVisibilityConverter.cs" />
     <Compile Include="Converters\CursorTypeToBooleanConverter.cs" />
     <Compile Include="Converters\IsSingleYConverter.cs" />
+    <Compile Include="Converters\PageTypeToBoolConverter.cs" />
     <Compile Include="Converters\PlotModeToStringConverter.cs" />
     <Compile Include="Converters\ValueTypeToStringConverter.cs" />
     <Compile Include="Data\GraphData.cs" />
@@ -93,6 +94,7 @@
     <Compile Include="Events\LocalBroadCaster.cs" />
     <Compile Include="Models\Enums.cs" />
     <Compile Include="Models\Event\EventModel.cs" />
+    <Compile Include="Models\Event\GraphSyncEventModel.cs" />
     <Compile Include="Models\Graph\GraphDataPoint.cs" />
     <Compile Include="Models\Graph\GraphModel.cs" />
     <Compile Include="Models\Graph\GraphRenderModel.cs" />
@@ -113,8 +115,6 @@
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\GraphProcessor.cs" />
     <Compile Include="Services\GraphRenderLoop.cs" />
-    <Compile Include="Services\PageNavigationService.cs" />
-    <Compile Include="Services\PlotControllerBuilder.cs" />
     <Compile Include="Utils\BoundedQueue.cs" />
     <Compile Include="ViewModels\Dialogs\SignalAddConfirmDialogViewModel.cs" />
     <Compile Include="ViewModels\Dialogs\SignalAddDialogViewModel.cs" />
@@ -125,10 +125,12 @@
     <Compile Include="ViewModels\GridViews\Internals\GridPopupHelper.cs" />
     <Compile Include="ViewModels\GridViews\Internals\GridValueType.cs" />
     <Compile Include="ViewModels\GridViews\Internals\SelectedItemsBehavior.cs" />
+    <Compile Include="ViewModels\PlotViews\Internals\CursorData.cs" />
+    <Compile Include="ViewModels\PlotViews\Internals\CursorManager.cs" />
+    <Compile Include="ViewModels\PlotViews\Internals\LayoutManager.cs" />
+    <Compile Include="ViewModels\PlotViews\Internals\PlotControllerBuilder.cs" />
+    <Compile Include="ViewModels\PlotViews\Internals\PlotPopupHelper.cs" />
     <Compile Include="ViewModels\PlotViews\PlotViewModel.cs" />
-    <Compile Include="ViewModels\PlotViews\MultipleYPlotViewModel.cs" />
-    <Compile Include="ViewModels\PlotViews\SeparateYPlotViewModel.cs" />
-    <Compile Include="ViewModels\PlotViews\SingleYPlotViewModel.cs" />
     <Compile Include="Views\Dialogs\ColorPickerDialog.xaml.cs">
       <DependentUpon>ColorPickerDialog.xaml</DependentUpon>
     </Compile>

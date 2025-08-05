@@ -27,7 +27,7 @@ namespace OxyTest.Events
 		/*
 		 * 이 broadcaster를 구독중인 Graph view instances
 		 */
-		private static readonly List<Action<EventModel>> subscribers = new List<Action<EventModel>>();
+		private static readonly List<Action<object>> subscribers = new List<Action<object>>();
 
 		/*
 		 * 참조중인 dbc 이름
@@ -39,7 +39,7 @@ namespace OxyTest.Events
 		private static object _lock = new object();
 
 		//graph instance가 이벤트 구독, 구독 시 EventListener로 받아온 메시지를 지속적으로 수신
-		public static void Subscribe(Action<EventModel> handler)
+		public static void Subscribe(Action<object> handler)
 		{
 			if (!EventListener.Instance.isRegistered)
 				EventListener.Instance.RegisterListeners();
@@ -54,7 +54,7 @@ namespace OxyTest.Events
 		}
 
 		//이벤트 구독 취소
-		public static void UsSubscribe(Action<EventModel> handler)
+		public static void UsSubscribe(Action<object> handler)
 		{
 			lock (_lock)
 			{
@@ -82,7 +82,6 @@ namespace OxyTest.Events
 						if (StagedMessages.TryDequeue(out var message))
 						{
 							// 처리 로직 실행
-							EnqueueMessageToBuffer(message);
 							BroadCast(message);
 						}
 					}
@@ -100,10 +99,11 @@ namespace OxyTest.Events
 			}
 		}
 
-		//이벤트 모델을 구독 중인 Graph instance들에게 전달. 
-		public static void BroadCast(EventModel model)
+		//이벤트 모델을 구독 중인 Graph instance들에게 object 타입 parameter를 전달함
+		//graphprocessor가 가지는 dictionary에 존재하는 클래스라면 뭐든 파싱 가능함
+		public static void BroadCast(object model)
 		{
-			List<Action<EventModel>> copy = new List<Action<EventModel>>();
+			List<Action<object>> copy = new List<Action<object>>();
 			lock (_lock)
 			{
 				copy = subscribers.ToList();
@@ -118,36 +118,39 @@ namespace OxyTest.Events
 			}
 		}
 
-		//저장되고있는 
 		public static Queue<EventModel> GetBufferedMessages()
 		{
-			return new Queue<EventModel>(bufferedMessages);
+			Queue<EventModel> queue;
+			lock (_lock)
+            {
+				queue = new Queue<EventModel>(bufferedMessages);
+			}
+			return queue;
 		}
 
 		public static void ClearBufferedMessages()
 		{
-			while (bufferedMessages.TryDequeue(out _)) ;
+            lock (_lock)
+            {
+				while (bufferedMessages.TryDequeue(out _)) ;
+			}
 		}
 
+        public static List<string> GetReferencedDBCNames()
+        {
+            lock (_lock)
+            {
+                return new List<string>(referencedDBCNames);
+            }
+        }
 
-
-		//public static List<string> GetReferencedDBCNames()
-		//{
-		//	lock (_lock)
-		//	{
-		//		return new List<string>(ReferencedDbcNames);
-		//	}
-		//}
-
-		//public static void SetReferencedDBCNames(List<string> dbcNames)
-		//{
-		//	lock (_lock)
-		//	{
-		//		ReferencedDbcNames.Clear();
-		//		ReferencedDbcNames.AddRange(dbcNames);
-		//	}
-		//}
-
-
-	}
+        public static void SetReferencedDBCNames(List<string> dbcNames)
+        {
+            lock (_lock)
+            {
+				referencedDBCNames.Clear();
+				referencedDBCNames.AddRange(dbcNames);
+            }
+        }
+    }
 }

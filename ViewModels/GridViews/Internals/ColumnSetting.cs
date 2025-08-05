@@ -9,7 +9,10 @@ namespace OxyTest.ViewModels.GridVIews.Internals
 {
 	public class ColumnSetting:INotifyPropertyChanged
 	{
-		public string FieldName { get; set; }
+		/// <summary>
+		/// GridControl columns기준 header값을 넣어둠
+		/// </summary>
+		public string Header { get; set; }
 		private bool? isVisible;
 		public bool? IsVisible
 		{

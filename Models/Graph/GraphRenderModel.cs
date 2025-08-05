@@ -18,31 +18,264 @@ namespace OxyTest.Models.Graph
 		 */
         public GraphRenderModel(object tag, SignalDataModel signal)
         {
+            SignalDataModel = signal;
+            Tag = tag;
+
             lineSeries = new LineSeries() { Tag = tag , YAxisKey = tag.ToString() , StrokeThickness = 2};
             //areaSeries = new AreaSeries() { Tag = tag , YAxisKey = tag.ToString() };
             //barSeries = new BarSeries() { Tag = tag, YAxisKey = tag.ToString() };
             scatterSeries = new ScatterSeries() { Tag = tag, YAxisKey = tag.ToString() };
 
-            //(순서 주의)min max 값 구한 뒤 axis에 연결 
-            var PhysicalRange = Initialize_PhysicalRange(signal.Length, signal.Factor, signal.Offset, signal.IsUnsigned);
-            physicalMin = PhysicalRange.Item1;
-            physicalMax = PhysicalRange.Item2;
-            var RawRange = Initialize_RawRange(signal.Length, signal.IsUnsigned);
-            RawMin = RawRange.Item1;
-            RawMax = RawRange.Item2;
-
-            Label = signal.Name;
-            YAxis_Physical = Initialize_PhysicalYAxis(tag, signal);
-            YAxis_Raw = Initialize_RawAxis(tag, signal);
-            YAxis = YAxis_Physical;
+            
+            SetYAxis();
         }
 
+        #region Properties
+        private SignalDataModel SignalDataModel { get; }
+        private object Tag { get; }
+
+        private readonly LineSeries lineSeries;
+        private readonly AreaSeries areaSeries;
+        private readonly BarSeries barSeries;
+        private readonly ScatterSeries scatterSeries;
+
+        private ePLOT_MODE plotMode;
+        public ePLOT_MODE PlotMode
+        {
+            get => plotMode;
+            set
+            {
+                if (plotMode != value)
+                {
+                    plotMode = value;
+                    OnLineTypeCHanged(value);
+                    NotifyPropertyChanged(nameof(PlotMode));
+                }
+            }
+        }
+
+        private bool visible;
+        public bool Visible
+        {
+            get => visible;
+            set
+            {
+                if (visible != value)
+                {
+                    visible = value;
+
+                    YAxis_Raw.IsAxisVisible = value;
+                    YAxis_Physical.IsAxisVisible = value;
+                    lineSeries.IsVisible = value;
+                    //areaSeries.IsVisible = value;
+                    //barSeries.IsVisible = value;
+                    //scatterSeries.IsVisible = value;
+                    NotifyPropertyChanged(nameof(Visible));
+                }
+            }
+        }
+
+        //basecolor가 바뀌면 plot color, axis color 전부 바뀌어야함.
+        private Color baseColor;
+        public Color BaseColor
+        {
+            get => baseColor;
+            set
+            {
+                if (baseColor != value)
+                {
+                    baseColor = value;
+                    ChangeSeriesColor(value);
+                    ChaangeAxisColor(YAxis_Raw, value);
+                    ChaangeAxisColor(YAxis_Physical, value);
+                    NotifyPropertyChanged(nameof(BaseColor));
+                }
+            }
+        }
+
+        private eVALUE_TYPE valueType;
+        public eVALUE_TYPE ValueType
+        {
+            get => valueType;
+            set
+            {
+                if (valueType != value)
+                {
+                    valueType = value;
+                    SetYAxis(value);
+                    NotifyPropertyChanged(nameof(ValueType));
+                }
+            }
+        }
+
+        private LinearAxis yAxis;
+        public LinearAxis YAxis
+        {
+            get => yAxis;
+            set
+            {
+                if (yAxis != value)
+                {
+                    yAxis = value;
+                    NotifyPropertyChanged(nameof(YAxis));
+                }
+            }
+        }
+
+        private bool isTitleVisible;
+        public bool IsTitleVisible
+        {
+            get => isTitleVisible;
+            set
+            {
+                if (isTitleVisible != value)
+                {
+                    isTitleVisible = value;
+                    if (isTitleVisible)
+                    {
+                        YAxis.Title = Label;
+                    }
+                    else
+                    {
+                        YAxis.Title = string.Empty;
+                    }
+                    NotifyPropertyChanged(nameof(YAxis));
+                    NotifyPropertyChanged(nameof(IsTitleVisible));
+                }
+            }
+        }
+
+        private bool selected;
+        public bool Selected
+        {
+            get => selected;
+            set
+            {
+                if (selected != value)
+                {
+                    selected = value;
+                    OnLineTypeCHanged(PlotMode);
+                    NotifyPropertyChanged(nameof(Selected));
+                }
+            }
+        }
+
+        public Series CurrentSeries
+        {
+            get
+            {
+                switch (PlotMode)
+                {
+                    case ePLOT_MODE.LINE:
+                        return lineSeries;
+                    case ePLOT_MODE.BAR:
+                        //return barSeries;
+                        break;
+                    case ePLOT_MODE.AREA:
+                        //return areaSeries;
+                        break;
+                    case ePLOT_MODE.POINT:
+                        return lineSeries;
+                    case ePLOT_MODE.LINE_POINT:
+                        return lineSeries;
+                }
+                return null;
+            }
+        }
+
+        public double physicalMin { get; private set; }
+        public double physicalMax { get; private set; }
+        public double RawMin { get; private set; }
+        public double RawMax { get; private set; }
+
+        private LinearAxis YAxis_Physical { get; set; }
+        private double YAxis_PhysicalMin { get; set; }
+        private double YAxis_PhysicalMax { get; set; }
+
+        private LinearAxis YAxis_Raw { get; set; }
+        private double YAxis_RawMin { get; set; }
+        private double YAxis_RawMax { get; set; }
+
+        private string Label { get; }
+
+        #endregion
+
+        #region Methods
+        /// <summary>
+        /// do lazy initialize
+        /// </summary>
         public void Initialize()
         {
             PlotMode = ePLOT_MODE.LINE;
             Visible = true;
             BaseColor = Colors.Red;
             IsTitleVisible = isTitleVisible;
+        }
+
+        public void UpdateSeries(List<GraphDataPoint> data)
+        {
+            //RenderModel에서 업데이트되는 dataseries는 보여지는 부분에 대해서만이지, 전체 series에 대해서는 아님
+            switch (PlotMode)
+            {
+                case ePLOT_MODE.LINE:
+                    UpdateLineSeries(data);
+                    break;
+                case ePLOT_MODE.BAR:
+                    //UpdateBarSeires(data);
+                    break;
+                case ePLOT_MODE.AREA:
+                    //UpdateAreaSeries(data);
+                    break;
+                case ePLOT_MODE.POINT:
+                    UpdateLineSeries(data);
+                    break;
+                case ePLOT_MODE.LINE_POINT:
+                    UpdateLineSeries(data);
+                    break;
+            }
+        }
+
+        public void FitYAxis()
+        {
+            YAxis_Physical.Zoom(YAxis_PhysicalMin, YAxis_PhysicalMax);
+            YAxis_Raw.Zoom(YAxis_RawMin, YAxis_RawMax);
+            NotifyPropertyChanged(nameof(YAxis));
+        }
+
+        public void SetGridLineVisible(bool visibility)
+        {
+            if (visibility)
+            {
+                YAxis_Physical.MajorGridlineStyle = LineStyle.Solid;
+                YAxis_Physical.MinorGridlineStyle = LineStyle.Dot;
+                YAxis_Raw.MajorGridlineStyle = LineStyle.Solid;
+                YAxis_Raw.MinorGridlineStyle = LineStyle.Dot;
+            }
+            else
+            {
+                YAxis_Physical.MajorGridlineStyle = LineStyle.None;
+                YAxis_Physical.MinorGridlineStyle = LineStyle.None;
+                YAxis_Raw.MajorGridlineStyle = LineStyle.None;
+                YAxis_Raw.MinorGridlineStyle = LineStyle.None;
+            }
+        }
+
+
+        #endregion
+
+        #region SubMethods
+        private void SetYAxis()
+        {
+            var PhysicalRange = Initialize_PhysicalRange(SignalDataModel.Length, SignalDataModel.Factor, SignalDataModel.Offset, SignalDataModel.IsUnsigned);
+            physicalMin = PhysicalRange.Item1;
+            physicalMax = PhysicalRange.Item2;
+            var RawRange = Initialize_RawRange(SignalDataModel.Length, SignalDataModel.IsUnsigned);
+            RawMin = RawRange.Item1;
+            RawMax = RawRange.Item2;
+
+            YAxis_Physical = Initialize_PhysicalYAxis(Tag, SignalDataModel);
+            YAxis_Raw = Initialize_RawAxis(Tag, SignalDataModel);
+            YAxis = YAxis_Physical;
         }
 
         private Tuple<double, double> Initialize_PhysicalRange(int length, double factor, double offset, bool Unsigned)
@@ -101,6 +334,8 @@ namespace OxyTest.Models.Graph
                 }
             };
             axis.Zoom(physicalMin, physicalMax);
+            YAxis_PhysicalMin = physicalMin;
+            YAxis_PhysicalMax = physicalMax;
             return axis;
         }
 
@@ -117,193 +352,35 @@ namespace OxyTest.Models.Graph
                 Minimum = RawMin,
                 Maximum = RawMax
             };
+            YAxis_RawMin = RawMin;
+            YAxis_RawMax = RawMax;
             axis.Zoom(RawMin, RawMax);
             return axis;
         }
 
-
-        private readonly LineSeries lineSeries;
-        private readonly AreaSeries areaSeries;
-        private readonly BarSeries barSeries;
-        private readonly ScatterSeries scatterSeries;
-
-        private ePLOT_MODE plotMode; //Todo : PlotMode가 바뀌는 경우, 바뀌게 되는 다른 series에 데이터를 추가해야함, UpdateSeries를 활용하는게 좋아보임
-        public ePLOT_MODE PlotMode
+        private void ChangeSeriesColor(Color color)
         {
-            get => plotMode;
-            set
-            {
-                if(plotMode != value)
-                {
-                    plotMode = value;
-                    OnLineTypeCHanged(value);
-                    NotifyPropertyChanged(nameof(PlotMode));
-                }
-            }
+            OxyColor oxyColor = OxyColor.FromArgb(color.A, color.R, color.G, color.B);
+            lineSeries.Color = oxyColor;
+            lineSeries.MarkerFill = oxyColor;
+            lineSeries.MarkerStroke = oxyColor;
+            //scatterSeries.MarkerFill = oxyColor;
+            //areaSeries.Color = oxyColor;
+            //areaSeries.Fill = OxyColor.FromArgb(color.A, color.R, color.G, color.B);
+            //barSeries.FillColor = oxyColor;
         }
 
-
-
-        private bool visible;
-        public bool Visible
+        private void ChaangeAxisColor(LinearAxis axis, Color color)
         {
-            get => visible;
-            set
-            {
-                if (visible != value)
-                {
-                    visible = value;
-
-                    YAxis_Raw.IsAxisVisible = value;
-                    YAxis_Physical.IsAxisVisible = value;
-                    
-                    lineSeries.IsVisible = value;
-                    //areaSeries.IsVisible = value;
-                    //barSeries.IsVisible = value;
-                    //scatterSeries.IsVisible = value;
-
-                    NotifyPropertyChanged(nameof(Visible));
-                }
-            }
-        }
-
-        //basecolor가 바뀌면 plot color, axis color 전부 바뀌어야함.
-        private Color baseColor;
-        public Color BaseColor
-        {
-            get => baseColor;
-            set
-            {
-                if (baseColor != value)
-                {
-                    baseColor = value;
-                    //1. series 색 값 변경(4종)
-                    ChangeSeriesColor(value);
-                    //lineSeries.Color = OxyColor.FromArgb();
-
-                    //2. x축 색 값 변경
-                    //=> viewmodel에서 진행
-                    //GraphData의 
-
-                    //3. y축 색 값 변경
-                    ChaangeAxisColor(YAxis_Raw, value);
-                    ChaangeAxisColor(YAxis_Physical, value);
-
-
-
-                    NotifyPropertyChanged(nameof(BaseColor));
-                }
-            }
-        }
-
-        public double physicalMin { get; }
-        public double physicalMax { get; }
-        public double RawMin { get; }
-        public double RawMax { get; }
-
-        public OxyColor OxyColor => OxyColor.FromArgb(BaseColor.A, BaseColor.R, BaseColor.G, BaseColor.B);
-
-        private LinearAxis YAxis_Physical { get; }
-        private LinearAxis YAxis_Raw { get; }
-
-        private eVALUE_TYPE valueType;
-        public eVALUE_TYPE ValueType
-        {
-            get
-            {
-                return valueType;
-            }
-            set
-            {
-                if(valueType != value)
-                {
-                    valueType = value;
-                    SetYAxis(value);
-                    NotifyPropertyChanged(nameof(ValueType));
-                }
-            }
-        }
-
-        private LinearAxis yAxis;
-        public LinearAxis YAxis
-        {
-            get
-            {
-                return yAxis;
-            }
-            set
-            {
-                if(yAxis != value)
-                {
-                    yAxis = value;
-                    NotifyPropertyChanged(nameof(YAxis));
-                }
-            }
-        }
-
-        private bool isTitleVisible;
-        public bool IsTitleVisible
-        {
-            get => isTitleVisible;
-            set
-            {
-                if(isTitleVisible != value)
-                {
-                    isTitleVisible = value;
-                    if (isTitleVisible)
-                    {
-                        YAxis.Title = Label;
-                    }
-                    else
-                    {
-                        YAxis.Title = string.Empty;
-                    }
-                    NotifyPropertyChanged(nameof(YAxis));
-                    NotifyPropertyChanged(nameof(IsTitleVisible));
-                }
-            }
-        }
-
-        private bool selected;
-        public bool Selected
-        {
-            get => selected;
-            set
-            {
-                if(selected != value)
-                {
-                    selected = value;
-                    OnLineTypeCHanged(PlotMode);
-                    NotifyPropertyChanged(nameof(Selected));
-                }
-            }
-        }
-
-        private string Label { get; }
-
-        public GraphDataPoint LastPoint { get; set; }
-
-        public Series CurrentSeries
-        {
-            get
-            {
-                switch (PlotMode)
-                {
-                    case ePLOT_MODE.LINE:
-                        return lineSeries;
-                    case ePLOT_MODE.BAR:
-                        //return barSeries;
-                        break;
-                    case ePLOT_MODE.AREA:
-                        //return areaSeries;
-                        break;
-                    case ePLOT_MODE.POINT:
-                        return lineSeries;
-                    case ePLOT_MODE.LINE_POINT:
-                        return lineSeries;
-                }
-                return null;
-            }
+            byte MinorGridAlpha = 32;
+            byte MajorGridAlpha = 64;
+            OxyColor oxyColor = OxyColor.FromArgb(color.A, color.R, color.G, color.B);
+            axis.AxislineColor = oxyColor;
+            axis.TicklineColor = oxyColor;
+            axis.TextColor = oxyColor;
+            axis.TitleColor = oxyColor;
+            axis.MinorGridlineColor = OxyColor.FromArgb(MinorGridAlpha, color.R, color.G, color.B);
+            axis.MajorGridlineColor = OxyColor.FromArgb(MajorGridAlpha, color.R, color.G, color.B);
         }
 
         private void OnLineTypeCHanged(ePLOT_MODE plotmode)
@@ -328,6 +405,7 @@ namespace OxyTest.Models.Graph
 
         private void SetYAxis(eVALUE_TYPE valueType)
         {
+            FitYAxis();
             switch (valueType)
             {
                 case eVALUE_TYPE.PHYSICAL:
@@ -339,64 +417,16 @@ namespace OxyTest.Models.Graph
             }
         }
 
-        public void ChangeSeriesColor(Color color)
+        private void UpdateLineSeries(List<GraphDataPoint> data)
         {
-            OxyColor oxyColor = OxyColor.FromArgb(color.A, color.R, color.G, color.B);
-            lineSeries.Color = oxyColor;
-            lineSeries.MarkerFill = oxyColor;
-            lineSeries.MarkerStroke = oxyColor;
-            //scatterSeries.MarkerFill = oxyColor;
-            //areaSeries.Color = oxyColor;
-            //areaSeries.Fill = OxyColor.FromArgb(color.A, color.R, color.G, color.B);
-            //barSeries.FillColor = oxyColor;
-        }
-
-        public void ChaangeAxisColor(LinearAxis axis, Color color)
-        {
-            byte MinorGridAlpha = 32;
-            byte MajorGridAlpha = 64;
-            OxyColor oxyColor = OxyColor.FromArgb(color.A, color.R, color.G, color.B);
-            axis.AxislineColor = oxyColor;
-            axis.TicklineColor = oxyColor;
-            axis.TextColor = oxyColor;
-            axis.TitleColor = oxyColor;
-            axis.MinorGridlineColor = OxyColor.FromArgb(MinorGridAlpha, color.R, color.G, color.B);
-            axis.MajorGridlineColor = OxyColor.FromArgb(MajorGridAlpha, color.R, color.G, color.B);
-        }
-
-        //graphdatapoint list 전부 clear, parameter인 list<graphdatapoint>로 새로 데이터 주입
-        public void UpdateSeries(IEnumerable<GraphDataPoint> data)
-        {
-            //RenderModel에서 업데이트되는 dataseries는 보여지는 부분에 대해서만이지, 전체 series에 대해서는 아님
-            switch (PlotMode)
+            int dataCount = data.Count();
+            var points = new List<DataPoint>(dataCount);
+            for (int i = 0; i < dataCount; i++)
             {
-                case ePLOT_MODE.LINE:
-                    UpdateLineSeries(data);
-                    break;
-                case ePLOT_MODE.BAR:
-                    //UpdateBarSeires(data);
-                    break;
-                case ePLOT_MODE.AREA:
-                    //UpdateAreaSeries(data);
-                    break;
-                case ePLOT_MODE.POINT:
-                    UpdateLineSeries(data);
-                    break;
-                case ePLOT_MODE.LINE_POINT:
-                    UpdateLineSeries(data);
-                    break;
+                points.Add(new DataPoint(data[i].X, data[i].Y));
             }
-            LastPoint = data.LastOrDefault();
-        }
-
-        private void UpdateLineSeries(IEnumerable<GraphDataPoint> data)
-        {
             lineSeries.Points.Clear();
-            foreach (GraphDataPoint point in data)
-            {
-                lineSeries.Points.Add(new DataPoint(point.X, point.Y));
-            }
-            //lineSeries.Points.Add(new DataPoint(point.X, point.Y)); 하나씩 넣는거 말고 리스트 통으로 만들어서 append 방식이 좀 더 라이브러리에 최적화됨
+            lineSeries.Points.AddRange(points); //addrange로 통으로 넣는게 더 라이브러리에 최적화되어있음
         }
 
         private void SetLineSeriesToLine() //lineseries를 pointseries처럼 보이게
@@ -442,24 +472,7 @@ namespace OxyTest.Models.Graph
                 lineSeries.MarkerSize = 3;
             }
         }
-
-        public void SetGridLineVisible(bool visibility)
-        {
-            if (visibility)
-            {
-                YAxis_Physical.MajorGridlineStyle = LineStyle.Solid;
-                YAxis_Physical.MinorGridlineStyle = LineStyle.Dot;
-                YAxis_Raw.MajorGridlineStyle = LineStyle.Solid;
-                YAxis_Raw.MinorGridlineStyle = LineStyle.Dot;
-            }
-            else
-            {
-                YAxis_Physical.MajorGridlineStyle = LineStyle.None;
-                YAxis_Physical.MinorGridlineStyle = LineStyle.None;
-                YAxis_Raw.MajorGridlineStyle = LineStyle.None;
-                YAxis_Raw.MinorGridlineStyle = LineStyle.None;
-            }
-        }
+        #endregion
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void NotifyPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

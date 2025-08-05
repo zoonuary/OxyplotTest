@@ -10,8 +10,8 @@ namespace OxyTest.Models.Graph
 	{
 		public double X { get; set; }
 		public double Y { get; set; }
-		public double? Size { get; set; } //scatter
-		public int? CategoryIndex { get; set; } //bar
-		public string groupKey { get; set; }
+		//public double? Size { get; set; } //scatter, 당장은 사용하지 않음. 
+		//public int? CategoryIndex { get; set; } //bar
+		//public string groupKey { get; set; }
 	}
 }

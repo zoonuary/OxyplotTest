@@ -67,9 +67,7 @@ namespace OxyTest.Models.Event
 		public uint ID { get; }
 		public byte DLC { get; }
 		public byte[] Data { get; set; }
-		//public DateTime TimeStamp { get; } => oxyplot에서 요구하는 timestamp가 double형태임으로 그에 맞춰 변경
 		public double TimeStamp { get; }
-		
 		public bool IsExtended { get; }
 		public bool IsValidMessage { get; }
 	}

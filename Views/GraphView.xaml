@@ -66,16 +66,15 @@
 
                         <dxb:BarSplitCheckItem Content="ViewType" ActAsDropDown="True" AllowUncheckInGroup="False" x:Name="ViewTypeSplitCheckItem">
                             <dxb:PopupMenu Closed="PopupMenu_Closed">
-                                <dxb:BarCheckItem Content="Single Y" GroupIndex="1" Command="{Binding CMD_ViewTypeChanged}" CommandParameter="SINGLE_Y" IsChecked="True"/>
-                                <dxb:BarCheckItem Content="Multiple Y" GroupIndex="1" Command="{Binding CMD_ViewTypeChanged}" CommandParameter="MULTIPLE_Y"/>
-                                <dxb:BarCheckItem Content="Separate Y" GroupIndex="1" Command="{Binding CMD_ViewTypeChanged}" CommandParameter="SEPARATE_Y"/>
+                                <dxb:BarCheckItem Content="Single Y" GroupIndex="1" IsChecked="{Binding PageType,Converter={StaticResource PageTypeToBoolConverter}, ConverterParameter=SINGLE_Y, Mode=TwoWay}"/>
+                                <dxb:BarCheckItem Content="Multiple Y" GroupIndex="1" IsChecked="{Binding PageType,Converter={StaticResource PageTypeToBoolConverter}, ConverterParameter=MULTIPLE_Y, Mode=TwoWay}"/>
+                                <dxb:BarCheckItem Content="Separate Y" GroupIndex="1" IsChecked="{Binding PageType,Converter={StaticResource PageTypeToBoolConverter}, ConverterParameter=SEPARATE_Y, Mode=TwoWay}"/>
                             </dxb:PopupMenu>
                         </dxb:BarSplitCheckItem>
 
                         <dxb:BarSplitCheckItem Content="Label" ActAsDropDown="True" x:Name="LabelSplitCheckItem">
                             <dxb:PopupMenu Closed="PopupMenu_Closed">
                                 <dxb:BarCheckItem Content="X-Axis" IsChecked="{Binding GraphCore.GraphData.Xaxis_LabelVisible, Mode=TwoWay}"/>
-
                                 <dxb:BarCheckItem Content="Y-Axis" IsChecked="{Binding GraphCore.GraphData.Yaxis_LabelVisible, Mode=TwoWay}"/>
                             </dxb:PopupMenu>
                         </dxb:BarSplitCheckItem>
@@ -83,18 +82,21 @@
                         <dxb:BarCheckItem Content="GridLineVisible" IsChecked="{Binding GraphCore.GraphData.GridLineVisible, Mode=TwoWay}"/>
 
                         <dxb:BarItemLinkSeparator/>
-                        <dxb:BarCheckItem Content="Default Cursor" GroupIndex="1" 
+                        <dxb:BarCheckItem Content="Default Cursor" GroupIndex="2" 
                                           ToolTip="set default cursor" ToolTipService.ShowOnDisabled="True"
                                           IsChecked="{Binding GraphCore.GraphData.CursorType, Converter={StaticResource CursorTypeToBooleanConverter}, ConverterParameter=DEFAULT, Mode=TwoWay}"/>
                         
-                        <dxb:BarCheckItem Content="Measuring Cursor" GroupIndex="1"
+                        <dxb:BarCheckItem Content="Measuring Cursor" GroupIndex="2"
                                           ToolTip="set default cursor" ToolTipService.ShowOnDisabled="True"
                                           IsChecked="{Binding GraphCore.GraphData.CursorType, Converter={StaticResource CursorTypeToBooleanConverter}, ConverterParameter=MEASUERMENT, Mode=TwoWay}"/>
                         
-                        <dxb:BarCheckItem Content="Diff Cursor" GroupIndex="1"
+                        <dxb:BarCheckItem Content="Diff Cursor" GroupIndex="2"
                                           ToolTip="set default cursor" ToolTipService.ShowOnDisabled="True"
                                           IsChecked="{Binding GraphCore.GraphData.CursorType, Converter={StaticResource CursorTypeToBooleanConverter}, ConverterParameter=DIFFERENCE, Mode=TwoWay}"/>
 
+                        <dxb:BarCheckItem Content="Fit X" IsChecked="{Binding GraphCore.GraphData.Xaxis_isFitMode, Mode=TwoWay}"/>
+
+                        <dxb:BarCheckItem Content="Sync X" IsChecked="{Binding GraphCore.GraphData.Xaxis_isSyncMode, Mode=TwoWay}"/>
                     </dxb:Bar.Items>
                 </dxb:Bar>
             </dxb:BarManager.Bars>
@@ -102,10 +104,13 @@
             <Grid DockPanel.Dock="Bottom">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="5"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid x:Name="GridViewContainer"/>
-                <Grid x:Name="GraphPlotContainer" Grid.Column="1"/>
+                <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="Transparent"
+					  ResizeBehavior="PreviousAndNext" ShowsPreview="True"/>
+                <Grid x:Name="GraphPlotContainer" Grid.Column="2"/>
             </Grid>
         </dxb:BarManager>
     </DockPanel>
