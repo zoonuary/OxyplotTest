@@ -28,10 +28,10 @@ namespace OxyTest.ViewModels.Dialogs
 			CMD_TreeListDoubleClick = new DelegateCommand<object>(OnTreeListDoubleClick);
 			TreeNodeCollections = new ObservableCollection<NodeItem>();
 		}
+		#region Properties
+		private Window View { get; set; }
 
 		private readonly Action<NodeItem> AddToGraph;
-
-		private Window View { get; set; }
 
 		public ICommand CMD_AddToGraph { get; }
 		public ICommand Loaded { get; }
@@ -41,8 +41,27 @@ namespace OxyTest.ViewModels.Dialogs
 		public ICommand CMD_TreeListDoubleClick { get; }
 		public ICommand CMD_TreeSelectionChanged { get; }
 
+		public ObservableCollection<NodeItem> TreeNodeCollections
+		{
+			get => GetProperty(() => TreeNodeCollections);
+			set => SetProperty(() => TreeNodeCollections, value);
+		}
 
-		void OnAddToGraph(NodeItem signal)
+		public NodeItem SelectedItem
+		{
+			get => GetProperty(() => SelectedItem);
+			set => SetProperty(() => SelectedItem, value);
+		}
+
+		public ObservableCollection<NodeItem> SelectedItems
+		{
+			get => GetProperty(() => SelectedItems);
+			set => SetProperty(() => SelectedItems, value);
+		}
+		#endregion
+
+		#region Methods
+		private void OnAddToGraph(NodeItem signal)
 		{
 			AddToGraph?.Invoke(signal);
 		}
@@ -74,14 +93,6 @@ namespace OxyTest.ViewModels.Dialogs
 					}
 				}
 			}
-
-			//if (SelectedItem.Signal != null) //signal 인 행에 대해서만 
-			//{
-			//	if (ShowConfirmDialog(SelectedItem.Signal.Name))
-			//	{
-			//		OnAddToGraph(SelectedItem);
-			//	}
-			//}
 		}
 
 		private void OnOK() //Dlg send OK
@@ -134,24 +145,9 @@ namespace OxyTest.ViewModels.Dialogs
 			TreeNodeCollections.Clear();
 		}
 
-		public ObservableCollection<NodeItem> TreeNodeCollections
-		{
-			get => GetProperty(() => TreeNodeCollections);
-			set => SetProperty(() => TreeNodeCollections, value);
-		}
+		#endregion
 
-		public NodeItem SelectedItem
-		{
-			get => GetProperty(() => SelectedItem);
-			set => SetProperty(() => SelectedItem, value);
-		}
-
-		public ObservableCollection<NodeItem> SelectedItems
-		{
-			get => GetProperty(() => SelectedItems);
-			set => SetProperty(() => SelectedItems, value);
-		}
-
+		#region SubMethods
 		private void SetTree(Dbc dbc)
 		{
 			NodeItem nodesNode = new NodeItem("Node");
@@ -205,6 +201,7 @@ namespace OxyTest.ViewModels.Dialogs
 				}
 			}
 		}
+		#endregion
 	}
 
 	public class NodeItem

@@ -27,8 +27,8 @@ namespace OxyTest.Services
 	{
 		[DllImport("user32.dll")]
 		public static extern bool GetWindowRect(IntPtr hwnd, ref RECT lpRect);
-
 		private Visual MainVisual { get; }
+
 		public DialogService(Visual visual)
 		{
 			MainVisual = visual;

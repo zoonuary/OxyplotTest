@@ -26,8 +26,8 @@ namespace OxyTest.ViewModels.GridViews.Internals
         public GridPopupHelper(GraphCore graphCore)
         {
             GraphCore = graphCore;
-
         }
+
         public IEnumerable<object> CreateGridControlPopupItems(GraphModel selectedItem)
         {
             BarButtonItem addPlotButton;
@@ -131,7 +131,6 @@ namespace OxyTest.ViewModels.GridViews.Internals
                 Margin = new System.Windows.Thickness(0, 0, 5, 0)
             });
         }
-
 
         public Popup CreateColumnChooserPopup(GridControl target, GridViewModel viewmodel)
         {

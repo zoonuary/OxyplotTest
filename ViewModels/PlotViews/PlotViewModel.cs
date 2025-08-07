@@ -36,7 +36,8 @@ namespace OxyTest.ViewModels
         {
             GraphCore = graphCore;
             PlotModel = new PlotModel();
-            
+            GraphData = GraphCore.GraphData;
+
             SetDefaultAxis(PlotModel);
             LayoutManager = new LayoutManager(GraphCore);
             CursorManager = new CursorManager(PlotModel, XAxis);
@@ -50,7 +51,7 @@ namespace OxyTest.ViewModels
             //동기화 등록
             GraphCore.GraphProcessor.RegiscatCalbackAction_GraphSync(UpdateSync);
 
-            GraphData = GraphCore.GraphData;
+            
             GraphData.Graphs_CollectionChanged += OnGraphCollectionChanged;
             GraphData.PropertyChanged += (s, e) =>
             {
@@ -103,14 +104,9 @@ namespace OxyTest.ViewModels
                 {
                     graph.UpdatePlotData(XAxis);
                 }
-
-                
-
-                //if (graphCore.GraphProcessor.eLOCAL_STATUS != eLOCAL_STATUS.LIVEUPDATE)
-                //{
-
-                //}
             };
+
+            //GraphCore.GraphProcessor.RegisterCallbackAction_LocalStatusChanged(OnLocalStatusChanged);
         }
 
         private string XAxis_Title { get; } = "Time(s)";
@@ -163,16 +159,18 @@ namespace OxyTest.ViewModels
             XAxis.MinorGridlineColor = OxyColor.FromAColor(32, OxyColors.Black);
             XAxis.Zoom(0, 10);
 
-            var yaxis = new LinearAxis
-            {
-                Position = AxisPosition.Left,
-                MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.Dot,
-                MajorGridlineColor = OxyColor.FromAColor(64, OxyColors.Black),
-                MinorGridlineColor = OxyColor.FromAColor(32, OxyColors.Black)
-            };
-            yaxis.Zoom(0, 10);
+            XAxis.AbsoluteMinimum = 0.0;
+
             model.Axes.Add(XAxis);
+            //var yaxis = new LinearAxis
+            //{
+            //    Position = AxisPosition.Left,
+            //    MajorGridlineStyle = LineStyle.Solid,
+            //    MinorGridlineStyle = LineStyle.Dot,
+            //    MajorGridlineColor = OxyColor.FromAColor(64, OxyColors.Black),
+            //    MinorGridlineColor = OxyColor.FromAColor(32, OxyColors.Black)
+            //};
+            //yaxis.Zoom(0, 10);
             //model.Axes.Add(yaxis); //성능 문제로 제거
         }
 
@@ -365,6 +363,5 @@ namespace OxyTest.ViewModels
             }
             PlotModel.InvalidatePlot(false);
         }
-
     }
 }

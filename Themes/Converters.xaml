@@ -10,6 +10,8 @@
     <converters:IsSingleYConverter x:Key="IsSingleYConverter"/>
     <converters:CursorTypeToBooleanConverter x:Key="CursorTypeToBooleanConverter"/>
     <converters:PageTypeToBoolConverter x:Key="PageTypeToBoolConverter"/>
+    <converters:LocalStatusToBooleanConverter x:Key="LocalStatusToBooleanConverter"/>
+    <converters:StartButtonEnableControlConverter x:Key="StartButtonEnableControlConverter"/>
 </ResourceDictionary>
 
 <!--<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"

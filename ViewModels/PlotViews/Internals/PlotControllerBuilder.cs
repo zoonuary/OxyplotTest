@@ -36,7 +36,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
 
             multiAxisPanManipulateCommand = new DelegatePlotCommand<OxyMouseDownEventArgs>((view, ctrl, args) =>
             {
-                ctrl.AddMouseManipulator(view, new MultiAxisPanManipulator(view, GraphData.PageType, GraphData.Xaxis_isSyncMode, graphCore.GraphProcessor.InstanceID), args);
+                ctrl.AddMouseManipulator(view, new MultiAxisPanManipulator(view, GraphData.PageType, GraphData.Xaxis_isSyncMode, graphCore.GraphProcessor.eLOCAL_STATUS, graphCore.GraphData.InstanceID), args);
             });
 
             ShowTracker = new DelegatePlotCommand<OxyMouseDownEventArgs>((view, ctrl, args) =>
@@ -47,7 +47,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             ZoomWheel = new DelegatePlotCommand<OxyMouseWheelEventArgs>((view, ctrl, args) =>
             {
                 double factor = 1;
-                var manipulator = new ZoomStepManipulator(view, GraphData.PageType, GraphData.Xaxis_isSyncMode, graphCore.GraphProcessor.InstanceID) { Step = args.Delta * 0.001 * factor };
+                var manipulator = new ZoomStepManipulator(view, GraphData.PageType, GraphData, graphCore.GraphProcessor.eLOCAL_STATUS, graphCore.GraphData.InstanceID) { Step = args.Delta * 0.001 * factor };
                 manipulator.Started(args);
             });
         }
@@ -125,12 +125,14 @@ namespace OxyTest.ViewModels.PlotViews.Internals
         private IPlotView View { get; }
         private ePAGE_TYPE PageType { get; }
         private bool IsSyncMode { get; }
+        private eLOCAL_STATUS LocalStatus { get; }
         private object InstanceID { get; }
-        public MultiAxisPanManipulator(IPlotView view, ePAGE_TYPE pageType, bool isSyncMode, object instanceID) : base(view)
+        public MultiAxisPanManipulator(IPlotView view, ePAGE_TYPE pageType, bool isSyncMode, eLOCAL_STATUS localstatus, object instanceID) : base(view)
         {
             View = view;
             PageType = pageType;
             IsSyncMode = isSyncMode;
+            LocalStatus = localstatus;
             InstanceID = instanceID;
         }
 
@@ -158,7 +160,8 @@ namespace OxyTest.ViewModels.PlotViews.Internals
                 return;
             }
 
-            if (this.XAxis != null)
+            if (this.XAxis != null
+                && LocalStatus != eLOCAL_STATUS.LIVEUPDATE)
             {
                 this.XAxis.Pan(this.PreviousPosition, e.Position);
                 if (IsSyncMode)
@@ -239,11 +242,15 @@ namespace OxyTest.ViewModels.PlotViews.Internals
     {
         private bool IsSyncMode { get; }
         private object InstanceID { get; }
+        private eLOCAL_STATUS LocalStatus { get; }
+        private double Maxrange { get; }
 
-        public ZoomStepManipulator(IPlotView plotView, ePAGE_TYPE pageType, bool isSyncMode, object instanceid) : base(plotView)
+        public ZoomStepManipulator(IPlotView plotView, ePAGE_TYPE pageType, GraphData graphData, eLOCAL_STATUS localstatus, object instanceid) : base(plotView)
         {
             PageType = pageType;
-            IsSyncMode = isSyncMode;
+            IsSyncMode = graphData.Xaxis_isSyncMode;
+            Maxrange = graphData.Xaxis_DefaultFitRange;
+            LocalStatus = localstatus;
             InstanceID = instanceid;
         }
 
@@ -296,18 +303,40 @@ namespace OxyTest.ViewModels.PlotViews.Internals
                 Step = 1.0 / (1 - Step);
             }
 
-            if (this.XAxis != null)
+            if (this.XAxis != null
+                && LocalStatus != eLOCAL_STATUS.LIVEUPDATE)
             {
-                this.XAxis.ZoomAt(Step, current.X);
-                if (IsSyncMode)
+                
+                if(((XAxis.ActualMaximum - XAxis.ActualMinimum) / Step) <= Maxrange)
                 {
-                    var eventData = new GraphSyncEventModel(InstanceID, XAxis.ActualMinimum, XAxis.ActualMaximum);
-                    LocalBroadCaster.BroadCast(eventData);
+                    this.XAxis.ZoomAt(Step, current.X);
+                }
+                else
+                {
+                    var min = XAxis.ActualMinimum;
+                    this.XAxis.Zoom(min, min + Maxrange);
                 }
             }
+
             if (this.YAxis != null)
             {
                 this.YAxis.ZoomAt(Step, current.Y);
+                if(PageType == ePAGE_TYPE.SINGLE_Y)
+                {
+                    foreach(var axis in PlotView.ActualModel.Axes)
+                    {
+                        if (axis.IsVertical())
+                        {
+                            axis.ZoomAt(Step, current.Y);
+                        }
+                    }
+                }
+            }
+
+            if (IsSyncMode)
+            {
+                var eventData = new GraphSyncEventModel(InstanceID, XAxis.ActualMinimum, XAxis.ActualMaximum);
+                LocalBroadCaster.BroadCast(eventData);
             }
 
             this.PlotView.InvalidatePlot(false);
@@ -316,6 +345,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
 
 
     }
+
     public class SignalTrackerManipulator : MouseManipulator
     {
         private PlotPopupHelper PlotPopupHelper { get; }

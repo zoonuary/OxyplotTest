@@ -110,6 +110,5 @@ namespace OxyTest.ViewModels.PlotViews.Internals
                 ItemsSource.Add(data);
             }
         }
-
     }
 }

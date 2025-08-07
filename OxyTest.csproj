@@ -86,13 +86,17 @@
     <Compile Include="Converters\ColumnVisibilityConverter.cs" />
     <Compile Include="Converters\CursorTypeToBooleanConverter.cs" />
     <Compile Include="Converters\IsSingleYConverter.cs" />
+    <Compile Include="Converters\LocalStatusToBooleanConverter.cs" />
     <Compile Include="Converters\PageTypeToBoolConverter.cs" />
     <Compile Include="Converters\PlotModeToStringConverter.cs" />
+    <Compile Include="Converters\StartButtonEnableControlConverter.cs" />
     <Compile Include="Converters\ValueTypeToStringConverter.cs" />
     <Compile Include="Data\GraphData.cs" />
+    <Compile Include="Events\EventDispatcher.cs" />
     <Compile Include="Events\EventListener.cs" />
     <Compile Include="Events\LocalBroadCaster.cs" />
     <Compile Include="Models\Enums.cs" />
+    <Compile Include="Models\Event\DataSlotModel.cs" />
     <Compile Include="Models\Event\EventModel.cs" />
     <Compile Include="Models\Event\GraphSyncEventModel.cs" />
     <Compile Include="Models\Graph\GraphDataPoint.cs" />
@@ -112,6 +116,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Services\DataSlotManager.cs" />
     <Compile Include="Services\DialogService.cs" />
     <Compile Include="Services\GraphProcessor.cs" />
     <Compile Include="Services\GraphRenderLoop.cs" />

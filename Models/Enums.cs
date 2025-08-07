@@ -23,7 +23,6 @@ namespace OxyTest
 		STOPPED
     }
 
-	//plot mode
 	public enum ePLOT_MODE 
 	{ 
 		LINE,
@@ -33,7 +32,6 @@ namespace OxyTest
 		LINE_POINT
 	}
 
-	//navigation page type
 	public enum ePAGE_TYPE
 	{
 		SINGLE_Y,
@@ -41,7 +39,6 @@ namespace OxyTest
 		SEPARATE_Y
 	}
 
-	//plotview cursor type
 	public enum eCURSOR_TYPE
     {
 		DEFAULT,
@@ -49,14 +46,9 @@ namespace OxyTest
 		DIFFERENCE
     }
 
-	//value Type
 	public enum eVALUE_TYPE
 	{
 		RAW,
 		PHYSICAL,
 	}
-
-	//class Enums
-	//{
-	//}
 }

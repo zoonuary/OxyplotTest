@@ -37,20 +37,26 @@
 														Converter={StaticResource PlayModeToEnabledConverter}}"/>
                         --><!--Command="{Binding DataContext.GraphData.Paused, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"--><!--
                         <dxb:BarCheckItem Content="Stop" GroupIndex="0" 
-										  ToolTip="Pause graph updates"
+										  ToolTip="Pause graph updates"IsChecked="{Binding LocalStatus, Converter={StaticResource LocalStatusToBooleanConverter}}"
 										  ToolTipService.ShowOnDisabled="True"
-										  IsEnabled="{Binding DataContext.GraphData.PlayMode, 
+										  IsEnabled="{Binding DataContext.GraphData.PlayMode, IsChecked="{Binding LocalStatus, Converter={StaticResource LocalStatusToBooleanConverter}}"
 														RelativeSource={RelativeSource AncestorType=UserControl}, 
 														Converter={StaticResource PlayModeToEnabledConverter}}"/>-->
 
-                        <dxb:BarCheckItem Content="Start" Command="{Binding CMD_START}"
+                        <dxb:BarCheckItem Content="Start" 
                                           ToolTip="Start Updating Graph"
-                                          GroupIndex="0" 
-                                          />
-                        <dxb:BarCheckItem Content="Stop" Command="{Binding CMD_STOP}"
+                                          GroupIndex="0"
+                                          Command="{Binding CMD_START}"
+                                          IsChecked="{Binding LocalStatus, Converter={StaticResource LocalStatusToBooleanConverter}, Mode=OneWay}"
+                                          IsEnabled="{Binding LocalStatus, Converter={StaticResource StartButtonEnableControlConverter}}"/>
+                                          
+                        <dxb:BarCheckItem Content="Stop" 
                                           ToolTip="Stop Updating Graph"
                                           GroupIndex="0"
-                                          />
+                                          Command="{Binding CMD_STOP}"
+                                          
+                                          IsEnabled="{Binding LocalStatus, Converter={StaticResource StartButtonEnableControlConverter}}"/>
+                                          
                         <dxb:BarButtonItem Content="clear"/>
 
                         <dxb:BarItemLinkSeparator/>
@@ -97,6 +103,8 @@
                         <dxb:BarCheckItem Content="Fit X" IsChecked="{Binding GraphCore.GraphData.Xaxis_isFitMode, Mode=TwoWay}"/>
 
                         <dxb:BarCheckItem Content="Sync X" IsChecked="{Binding GraphCore.GraphData.Xaxis_isSyncMode, Mode=TwoWay}"/>
+
+                        <dxb:BarButtonItem Content="Test" Command="{Binding OnTestClicked}"/>
                     </dxb:Bar.Items>
                 </dxb:Bar>
             </dxb:BarManager.Bars>

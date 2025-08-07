@@ -12,7 +12,7 @@ using System.Windows;
 
 namespace OxyTest.ViewModels.GridViews.Internals
 {
-    public class SelectedItemsBehavior:Behavior<GridControl>
+    public class SelectedItemsBehavior : Behavior<GridControl>
     {
         public static readonly DependencyProperty SelectedItemsProperty =
          DependencyProperty.Register(
@@ -45,7 +45,7 @@ namespace OxyTest.ViewModels.GridViews.Internals
                 return;
 
             SelectedItems.Clear();
-            foreach(var item in AssociatedObject.SelectedItems)
+            foreach (var item in AssociatedObject.SelectedItems)
             {
                 SelectedItems.Add(item);
             }

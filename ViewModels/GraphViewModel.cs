@@ -33,6 +33,10 @@ namespace OxyTest.ViewModels
             CMD_ClearGraph = new DelegateCommand(OnSignalsCleared);
             CMD_ShowRawValues = new DelegateCommand(OnShowRawValues);
             CMD_ShowPhysicalValues = new DelegateCommand(OnShowPhysicalValues);
+
+            OnTestClicked = new DelegateCommand(OnTestClick);
+
+            GraphCore.GraphProcessor.RegisterCallbackAction_LocalStatusChanged((status) => { RaisePropertiesChanged(nameof(LocalStatus)); });
         }
 
         public ICommand CMD_START { get; }
@@ -44,6 +48,8 @@ namespace OxyTest.ViewModels
         public ICommand CMD_ClearGraph { get; }
         public ICommand CMD_ShowRawValues { get; }
         public ICommand CMD_ShowPhysicalValues { get; }
+
+        public ICommand OnTestClicked { get; }
 
         private ePAGE_TYPE pagetype;
         public ePAGE_TYPE PageType
@@ -58,6 +64,9 @@ namespace OxyTest.ViewModels
                 }
             }
         }
+
+        public eLOCAL_STATUS LocalStatus => GraphCore.GraphProcessor.eLOCAL_STATUS; //localstatus를 가지는 주체(GraphProcessor)가 누군지 명확히 할 것. (setter 추가 X)
+        
 
         public void OpenSignalAddDialog()
         {
@@ -99,6 +108,11 @@ namespace OxyTest.ViewModels
             {
                 graph.ValueType = eVALUE_TYPE.PHYSICAL;
             }
+        }
+
+        private void OnTestClick()
+        {
+            GraphCore.DataSlotManager.CreateNewSlot(GraphCore.GraphProcessor.LastEventTime);
         }
     }
 }

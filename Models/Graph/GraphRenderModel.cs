@@ -26,7 +26,6 @@ namespace OxyTest.Models.Graph
             //barSeries = new BarSeries() { Tag = tag, YAxisKey = tag.ToString() };
             scatterSeries = new ScatterSeries() { Tag = tag, YAxisKey = tag.ToString() };
 
-            
             SetYAxis();
         }
 

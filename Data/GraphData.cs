@@ -13,6 +13,7 @@ namespace OxyTest.Data
 	/*
 	 * Graph가 보여지기 위해 필요한 공용 데이터 모음
 	 * 1. Graphs = 사용자가 추가한 signal 정보 저장, play시 파형 데이터가 추가되는 GraphModel클래스의 모음 
+	 * 2. InstanceID = 이 Graph 창이 가지는 ID. 다른 창들과 구분을 하기 위해 이용됨
 	 * 2. pageType = single/ multiple/ separeate 3가지 view type을 보여주기 위해 추가된 enum변수
 	 * 3. cursorType = default / measurement / difference 3가지 커서로 값 탐색을 위해 추가된 enum 변수
 	 * 4. gridlinevisible = plot area에서 격자선 추가 / 삭제 변수. 렌더링 성능에 크게 영향을 미치는 요소 중 하나인 bool 변수
@@ -43,6 +44,8 @@ namespace OxyTest.Data
 			Xaxis_DefualtMargin = 2.0;
 			Xaxis_DefaultFitRange = 300.0;
         }
+
+		public object InstanceID { get; } = Guid.NewGuid();
 
 		private ePAGE_TYPE pageType;
 		public ePAGE_TYPE PageType

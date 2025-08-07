@@ -55,10 +55,63 @@ namespace OxyTest.ViewModels
 				new GridPlotType("Point", ePLOT_MODE.POINT),
 				new GridPlotType("Line + Point", ePLOT_MODE.LINE_POINT)
 			};
-
 		}
 
-		private void Initialize_GridveiwSetting()
+		#region Properties
+
+		public ICommand CMD_OpenColorPickerDialog { get; }
+
+		public ObservableCollection<GraphModel> Graphs { get; } //절대 Collection의 crud를 직접하지말것. 무조건 GraphData.Graphs를 통해서만 수정되는 컬렉션 
+
+		public GraphModel SelectedItem
+		{
+			get => GetProperty(() => SelectedItem);
+			set
+			{
+				if (SetProperty(() => SelectedItem, value))
+				{
+					GraphData.SelectedModel = value;
+				}
+			}
+		}
+
+		public string ColumnChooserButtonText { get; set; } = "Show Column Chooser...";
+
+		public bool? IsAllColumnsVisible
+		{
+			get
+			{
+				if (ColumnSettings.All(x => x.IsVisible == true)) return true;
+				if (ColumnSettings.All(x => x.IsVisible == false)) return false;
+				return null;
+			}
+			set
+			{
+				if (value != null)
+				{
+					foreach (var column in ColumnSettings)
+					{
+						column.IsVisible = value;
+					}
+				}
+				SetProperty(() => IsAllColumnsVisible, value);
+			}
+		}
+
+		public IList SelectedItems { get; set; } = new ObservableCollection<GraphModel>(); //직접 접근 금지. 순회할 때는 .Tolist() 등의 복사본 사용 필요
+		public ObservableCollection<ColumnSetting> ColumnSettings
+		{
+			get => GetProperty(() => ColumnSettings);
+			set => SetProperty(() => ColumnSettings, value);
+		}
+
+		public ObservableCollection<GridValueType> ValueTypes { get; } //value type combobox에 바인딩될 컬렉션, datasource는 모델로부터 받아옴.
+		public ObservableCollection<GridPlotType> PlotTypes { get; }
+
+        #endregion
+
+        #region Methods
+        private void Initialize_GridveiwSetting()
         {
 			ColumnSettings = new ObservableCollection<ColumnSetting>();
 			//컬럼 초기 설정 인덱스 매칭으로 진행하는게 최선으로 보여짐(IsVisible property를 xaml에서 직접 접근 불가능함)
@@ -133,54 +186,6 @@ namespace OxyTest.ViewModels
 				}
 			}
 		}
-
-		public ICommand CMD_OpenColorPickerDialog { get; }
-
-		public ObservableCollection<GraphModel> Graphs { get; } //절대 Collection의 crud를 직접하지말것. 무조건 GraphData.Graphs를 통해서만 수정되는 컬렉션 
-
-		public GraphModel SelectedItem
-        {
-			get => GetProperty(() => SelectedItem);
-            set
-            {
-				if(SetProperty(() => SelectedItem, value))
-                {
-					GraphData.SelectedModel = value;
-                }
-            }
-        }
-
-		public string ColumnChooserButtonText { get; set; } = "Show Column Chooser...";
-
-		public bool? IsAllColumnsVisible
-        {
-            get
-            {
-				if (ColumnSettings.All(x => x.IsVisible == true)) return true;
-				if (ColumnSettings.All(x => x.IsVisible == false)) return false;
-				return null;
-            }
-            set
-            {
-				if(value != null)
-                {
-					foreach (var column in ColumnSettings)
-					{
-						column.IsVisible = value;
-					}
-				}
-				SetProperty(() => IsAllColumnsVisible, value);
-            }
-        }
-
-		public IList SelectedItems { get; set; } = new ObservableCollection<GraphModel>(); //직접 접근 금지. 순회할 때는 .Tolist() 등의 복사본 사용 필요
-		public ObservableCollection<ColumnSetting> ColumnSettings
-        {
-			get => GetProperty(() => ColumnSettings);
-			set => SetProperty(() => ColumnSettings, value);
-        }
-
-		public ObservableCollection<GridValueType> ValueTypes { get; } //value type combobox에 바인딩될 컬렉션, datasource는 모델로부터 받아옴.
-		public ObservableCollection<GridPlotType> PlotTypes { get; }
+        #endregion
 	}
 }

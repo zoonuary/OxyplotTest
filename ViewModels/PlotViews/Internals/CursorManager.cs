@@ -66,10 +66,6 @@ namespace OxyTest.ViewModels.PlotViews.Internals
         
         }
 
-        
-
-
-
         public List<LineAnnotation> GetMeasureLines(ePAGE_TYPE pageType)
         {
             if(pageType == ePAGE_TYPE.SEPARATE_Y)

@@ -1,4 +1,5 @@
 ﻿using OxyTest.Data;
+using OxyTest.Events;
 using OxyTest.Models.Event;
 using OxyTest.Services;
 using System;
@@ -22,13 +23,18 @@ namespace OxyTest.Composition
 		public GraphData GraphData { get; }
 		public GraphProcessor GraphProcessor { get; }
 		public DialogService DialogService { get; }
+		public EventDispatcher EventDispatcher { get; }
+		public DataSlotManager DataSlotManager { get; }
 
 		public GraphCore(Visual visual)
 		{
 			MainVisual = visual;
 			Dispatcher = MainVisual.Dispatcher;
+
 			GraphData = new GraphData();
-			GraphProcessor = new GraphProcessor(GraphData, Dispatcher);
+			EventDispatcher = new EventDispatcher();
+			DataSlotManager = new DataSlotManager(EventDispatcher, GraphData);
+			GraphProcessor = new GraphProcessor(GraphData, Dispatcher, DataSlotManager);
 			DialogService = new DialogService(MainVisual);
 		}
 	}
