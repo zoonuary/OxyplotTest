@@ -1,6 +1,7 @@
 ﻿using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
+using OxyTest.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,7 +22,8 @@ namespace OxyTest.Models.Graph
             SignalDataModel = signal;
             Tag = tag;
 
-            lineSeries = new LineSeries() { Tag = tag , YAxisKey = tag.ToString() , StrokeThickness = 2};
+
+            lineSeries = new LineSeries() { Tag = tag, YAxisKey = tag.ToString(), StrokeThickness = 2 , MinimumSegmentLength = 0, };
             //areaSeries = new AreaSeries() { Tag = tag , YAxisKey = tag.ToString() };
             //barSeries = new BarSeries() { Tag = tag, YAxisKey = tag.ToString() };
             scatterSeries = new ScatterSeries() { Tag = tag, YAxisKey = tag.ToString() };
@@ -182,6 +184,10 @@ namespace OxyTest.Models.Graph
             }
         }
 
+        private DownsampleStreamer DownsampleStreamer = new DownsampleStreamer();
+        private bool WasDownsampled = false;
+        private bool WasBridged = false;
+
         public double physicalMin { get; private set; }
         public double physicalMax { get; private set; }
         public double RawMin { get; private set; }
@@ -197,27 +203,32 @@ namespace OxyTest.Models.Graph
 
         private string Label { get; }
 
+
+
+
         #endregion
 
         #region Methods
         /// <summary>
         /// do lazy initialize
         /// </summary>
-        public void Initialize()
+        public void Initialize(Color color)
         {
             PlotMode = ePLOT_MODE.LINE;
             Visible = true;
-            BaseColor = Colors.Red;
+            BaseColor = color;
             IsTitleVisible = isTitleVisible;
         }
 
-        public void UpdateSeries(List<GraphDataPoint> data)
+        public void UpdateSeries(BufferLease<GraphDataPoint> data, ViewPortInfo viewPortInfo, bool isBridged = false)
         {
             //RenderModel에서 업데이트되는 dataseries는 보여지는 부분에 대해서만이지, 전체 series에 대해서는 아님
             switch (PlotMode)
             {
                 case ePLOT_MODE.LINE:
-                    UpdateLineSeries(data);
+                case ePLOT_MODE.POINT:
+                case ePLOT_MODE.LINE_POINT:
+                    UpdateLineSeries(data, viewPortInfo, isBridged);
                     break;
                 case ePLOT_MODE.BAR:
                     //UpdateBarSeires(data);
@@ -225,15 +236,8 @@ namespace OxyTest.Models.Graph
                 case ePLOT_MODE.AREA:
                     //UpdateAreaSeries(data);
                     break;
-                case ePLOT_MODE.POINT:
-                    UpdateLineSeries(data);
-                    break;
-                case ePLOT_MODE.LINE_POINT:
-                    UpdateLineSeries(data);
-                    break;
             }
         }
-
         public void FitYAxis()
         {
             YAxis_Physical.Zoom(YAxis_PhysicalMin, YAxis_PhysicalMax);
@@ -416,17 +420,112 @@ namespace OxyTest.Models.Graph
             }
         }
 
-        private void UpdateLineSeries(List<GraphDataPoint> data)
+        private void UpdateLineSeries(BufferLease<GraphDataPoint> lease, ViewPortInfo viewPortInfo, bool isBridged)
         {
-            int dataCount = data.Count();
-            var points = new List<DataPoint>(dataCount);
-            for (int i = 0; i < dataCount; i++)
+            if (lease.Length <= 0 || viewPortInfo.PixelWidth <= 0) return;
+
+            if (isBridged && lease.Length == 2)
             {
-                points.Add(new DataPoint(data[i].X, data[i].Y));
+                if (!WasBridged)
+                {
+                    WasBridged = true;
+                    SetLineSeriesToDashHint();
+                }
             }
+            else
+            {
+                if (WasBridged)
+                {
+                    WasBridged = false;
+                    SetLineSeriesToLine();
+                }
+            }
+
             lineSeries.Points.Clear();
-            lineSeries.Points.AddRange(points); //addrange로 통으로 넣는게 더 라이브러리에 최적화되어있음
+            int bins = Math.Max(1, viewPortInfo.PixelWidth);
+            lineSeries.Points.Capacity = Math.Max(lineSeries.Points.Capacity, bins * 4);
+
+            if (ShouldDownSample(lease.Length, viewPortInfo.PixelWidth, ref WasDownsampled))
+            {
+                DownsampleStreamer.Reset(viewPortInfo.XMin, viewPortInfo.XMax, bins);
+                DownsampleStreamer.ProcessSegment(lease.Data, 0, lease.Length, lineSeries.Points);
+                DownsampleStreamer.Finish(lineSeries.Points);
+            }
+            else
+            {
+                WasDownsampled = false;
+                for (int i = 0; i < lease.Length; i++)
+                {
+                    var datapoint = lease.Data[i];
+                    lineSeries.Points.Add(new DataPoint(datapoint.X, datapoint.Y));
+                }
+            }
         }
+
+        private bool ShouldDownSample(int visiblePointsCount, int pixelWidth, ref bool wasDownsampled, double hystOn = 2.4, double hystOff = 2.1)
+        {
+            if (wasDownsampled)
+            {
+                if (visiblePointsCount <= hystOff * pixelWidth)
+                {
+                    wasDownsampled = false;
+                    return false;
+                }
+                return true;
+            }
+            else
+            {
+                if (visiblePointsCount >= hystOn * pixelWidth)
+                {
+                    wasDownsampled = true;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        //private void UpdateLineSeries(SliceView<GraphDataPoint> view, ViewPortInfo viewPortInfo)
+        //{
+        //    RenderPoints.Clear();
+
+        //    DownsampleStreamer.Reset(viewPortInfo.XMin, viewPortInfo.XMax, viewPortInfo.PixelWidth);
+        //    if(view.First.Count > 0)
+        //        DownsampleStreamer.ProcessSegment(view.First.Array, view.First.Offset, view.First.Count, RenderPoints);
+        //    if (view.Second.Count > 0)
+        //        DownsampleStreamer.ProcessSegment(view.Second.Array, view.Second.Offset, view.Second.Count, RenderPoints);
+        //    DownsampleStreamer.Finish(RenderPoints);
+
+        //    lineSeries.Points.Clear();
+        //    lineSeries.Points.AddRange(RenderPoints);
+        //}
+
+        //private void UpdateLineSeries(SliceView<GraphDataPoint> view)
+        //{
+        //    void Add(GraphDataPoint[] points, int off, int cnt)
+        //    {
+        //        for(int i = 0, j = off; i < cnt; i++, j++)
+        //        {
+        //            RenderPoints.Add(new DataPoint(points[j].X, points[j].Y));
+        //        }
+        //    }
+
+        //    RenderPoints.Clear();
+
+        //    if (view.First.Count > 0)
+        //    {
+        //        Add(view.First.Array, view.First.Offset, view.First.Count);
+        //    }
+
+        //    if(view.Second.Count > 0)
+        //    {
+        //        Add(view.Second.Array, view.Second.Offset, view.Second.Count);
+        //    }
+
+        //    lineSeries.Points.Clear();
+        //    lineSeries.Points.AddRange(RenderPoints);
+        //}
+
+
 
         private void SetLineSeriesToLine() //lineseries를 pointseries처럼 보이게
         {
@@ -439,10 +538,34 @@ namespace OxyTest.Models.Graph
                 lineSeries.StrokeThickness = 2;
             }
             lineSeries.MarkerType = MarkerType.None;
+            lineSeries.LineStyle = LineStyle.Solid;
+            OxyColor current = OxyColor.FromRgb(BaseColor.R, BaseColor.G, BaseColor.B); ;
+            lineSeries.Color = current;
+            lineSeries.MarkerFill = current;
+            lineSeries.MarkerStroke = current;
+        }
+
+        private void SetLineSeriesToDashHint()
+        {
+            if (selected)
+            {
+                lineSeries.StrokeThickness = 3;
+            }
+            else
+            {
+                lineSeries.StrokeThickness = 2;
+            }
+            lineSeries.MarkerType = MarkerType.None;
+            lineSeries.LineStyle = LineStyle.Dash;
+            OxyColor current = OxyColor.FromArgb(32, BaseColor.R, BaseColor.G, BaseColor.B); ;
+            lineSeries.Color = current;
+            lineSeries.MarkerFill = current;
+            lineSeries.MarkerStroke = current;
         }
 
         private void SetLineSeriesToPoint() //lineseires를 lineseries처럼 보이게
         {
+            lineSeries.LineStyle = LineStyle.Solid;
             if (Selected)
             {
                 lineSeries.MarkerType = MarkerType.Circle;
@@ -453,11 +576,21 @@ namespace OxyTest.Models.Graph
                 lineSeries.MarkerType = MarkerType.Circle;
                 lineSeries.MarkerSize = 3;
             }
-            lineSeries.StrokeThickness = 0;
+            lineSeries.StrokeThickness = 0; 
+            OxyColor current = OxyColor.FromRgb(BaseColor.R, BaseColor.G, BaseColor.B); ;
+            lineSeries.Color = current;
+            lineSeries.MarkerFill = current;
+            lineSeries.MarkerStroke = current;
         }
 
         private void SetLineSeriesToLinePoint()
         {
+            OxyColor current = OxyColor.FromRgb(BaseColor.R, BaseColor.G, BaseColor.B); ;
+            lineSeries.Color = current;
+            lineSeries.MarkerFill = current;
+            lineSeries.MarkerStroke = current;
+
+            lineSeries.LineStyle = LineStyle.Solid;
             if (Selected)
             {
                 lineSeries.StrokeThickness = 3;
@@ -470,6 +603,7 @@ namespace OxyTest.Models.Graph
                 lineSeries.MarkerType = MarkerType.Circle;
                 lineSeries.MarkerSize = 3;
             }
+
         }
         #endregion
 

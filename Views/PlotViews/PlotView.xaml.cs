@@ -36,5 +36,13 @@ namespace OxyTest.Views
                 }
             };
         }
+
+        private void plotview_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if(DataContext is PlotViewModel viewmodel)
+            {
+                viewmodel.PlotControllerBuilder.SetViewPortInfo(viewmodel.XAxis);
+            }
+        }
     }
 }

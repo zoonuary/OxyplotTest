@@ -2,6 +2,7 @@
 using HPT.Common.Utils;
 using HPT.DBCParser.Parsers;
 using OxyTest.Models.Event;
+using OxyTest.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,7 +62,7 @@ namespace OxyTest.Events
 			//============================== 이벤트 수신 스레드와 parsing 스레드 분리
 			
 			CancellationTokenSource tokenSource = new CancellationTokenSource();//비동기 루프 정리용 TokenSource 생성															
-			_ = LocalBroadCaster.StartBroadCastServiceAsync(tokenSource.Token);//Event 비동기 처리 루프 시작
+			_ = LocalBroadCaster.Instance.StartBroadCastServiceAsync(tokenSource.Token);//Event 비동기 처리 루프 시작
 			AppDomain.CurrentDomain.ProcessExit += (s, e) => { tokenSource.Cancel(); };//루프 종료 트리거 등록
 
 
@@ -75,48 +76,47 @@ namespace OxyTest.Events
 			//============================== 수신 이벤트 처리
 			Start += (s, e) =>
 			{
-				LocalBroadCaster.ClearBufferedMessages();
-				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.CLEAR));
-				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.START));
+				//LocalBroadCaster.Instance.ClearBufferedMessages();
+				LocalBroadCaster.Instance.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.CLEAR));
+				LocalBroadCaster.Instance.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.START));
 			};
 
 			Stop += (s, e) =>
 			{
-				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.STOP));
+				LocalBroadCaster.Instance.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.STOP));
 			};
 
 			OnEventData += (s, e) =>
 			{
-				EventData eventData = e.EventData;
-				switch (eventData.Type)
-				{
-					case EventType.CAN_ERR_MESSAGE:
-					case EventType.CAN_MESSAGE:
-						if(eventData is CanDataFrame canEventData)
-						{
-							var message = new EventModel(eEVENT_BEHAVIOR_TYPE.ONEVENT, eventData.Type, canEventData.MsgId, canEventData.DLC, canEventData.Data, canEventData.TimeStamp, canEventData.IsExtended);
-							LocalBroadCaster.EnqueueEvent(message);
-							LocalBroadCaster.EnqueueMessageToBuffer(message);
-						}
-						break;
+				var message = EventDataParser.Instance.Parse(e.EventData);
+				LocalBroadCaster.Instance.EnqueueEvent(message);
 
-					case EventType.CAN_FD_ERR_MESSAGE:
-					case EventType.CAN_FD_MESSAGE:
-						if (eventData is CanFdDataFrame canFDEventData)
-						{
-							//fd 메세지 추가 이벤트 추후에 더할것
-							//Models.StoredMessage message = new Models.StoredMessage(ePROTOCOL_TYPE.CANFD, canFDEventData.MsgId, canFDEventData.DLC, canFDEventData.Data, canFDEventData.TimeStamp, canFDEventData.IsExtended);
-							//GraphEventBroadCaster.AddStoredCANFDMessage(message);
-							//GraphEventBroadCaster.BroadCast(new GraphEventData { eventType = eGRAPH_EVENT_TYPE.ONEVENT, data = message });
-						}
-						break;
-				}
+				//EventData eventData = e.EventData;
+				//switch (eventData.Type)
+				//{
+				//	case EventType.CAN_ERR_MESSAGE:
+				//	case EventType.CAN_MESSAGE:
+				//		if(eventData is CanDataFrame canEventData)
+				//		{
+				//			var message = EventDataParser.Instance.Parse(canEventData);
+				//			LocalBroadCaster.Instance.EnqueueEvent(message);
+				//			LocalBroadCaster.Instance.EnqueueMessageToBuffer(message);
+				//		}
+				//		break;
+
+				//	case EventType.CAN_FD_ERR_MESSAGE:
+				//	case EventType.CAN_FD_MESSAGE:
+				//		if (eventData is CanFdDataFrame canFDEventData)
+				//		{
+				//		}
+				//		break;
+				//}
 			};
 
 			DbcUpdated += (s, e) =>
 			{
-				LocalBroadCaster.SetReferencedDBCNames(DBCController.Instance.GetAllDatabase().Select(x => x.DBCName).ToList());
-				LocalBroadCaster.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.DBC_UPDATED));
+				LocalBroadCaster.Instance.SetReferencedDBCNames(DBCController.Instance.GetAllDatabase().Select(x => x.DBCName).ToList());
+				LocalBroadCaster.Instance.EnqueueEvent(new EventModel(eEVENT_BEHAVIOR_TYPE.DBC_UPDATED));
 			};
 		}
 

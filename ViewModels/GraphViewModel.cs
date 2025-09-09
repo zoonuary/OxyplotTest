@@ -24,8 +24,11 @@ namespace OxyTest.ViewModels
             GridViewModel = gridViewModel;
 
             PageType = GraphCore.GraphData.PageType;
-            CMD_START = new DelegateCommand(() => GraphCore.GraphProcessor.eLOCAL_STATUS = eLOCAL_STATUS.LIVEUPDATE);
-            CMD_STOP = new DelegateCommand(() => GraphCore.GraphProcessor.eLOCAL_STATUS = eLOCAL_STATUS.PAUSED);
+            CMD_START = new DelegateCommand(() => GraphCore.GraphData.eLOCAL_STATUS = eLOCAL_STATUS.LIVEUPDATE, () => GraphCore.GraphData.eLOCAL_STATUS != eLOCAL_STATUS.STOPPED);
+            CMD_STOP = new DelegateCommand(() => GraphCore.GraphData.eLOCAL_STATUS = eLOCAL_STATUS.PAUSED, () => GraphCore.GraphData.eLOCAL_STATUS != eLOCAL_STATUS.STOPPED);
+
+            CMD_START.RaiseCanExecuteChanged();
+            CMD_STOP.RaiseCanExecuteChanged();
 
             //----------------------------------------
             CMD_AppendGraph = new DelegateCommand(OpenSignalAddDialog);
@@ -36,11 +39,23 @@ namespace OxyTest.ViewModels
 
             OnTestClicked = new DelegateCommand(OnTestClick);
 
-            GraphCore.GraphProcessor.RegisterCallbackAction_LocalStatusChanged((status) => { RaisePropertiesChanged(nameof(LocalStatus)); });
+            var graphdata = GraphCore.GraphData;
+            graphdata.PropertyChanged += (s, e) =>
+            {
+                if(e.PropertyName == nameof(graphdata.eLOCAL_STATUS))
+                {
+                    GraphCore.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        CMD_START.RaiseCanExecuteChanged();
+                        CMD_STOP.RaiseCanExecuteChanged();
+                    }));
+                    
+                }
+            };
         }
 
-        public ICommand CMD_START { get; }
-        public ICommand CMD_STOP { get; }
+        public DelegateCommand CMD_START { get; }
+        public DelegateCommand CMD_STOP { get; }
 
         //---------------------------------------
         public ICommand CMD_AppendGraph { get; }
@@ -64,9 +79,6 @@ namespace OxyTest.ViewModels
                 }
             }
         }
-
-        public eLOCAL_STATUS LocalStatus => GraphCore.GraphProcessor.eLOCAL_STATUS; //localstatus를 가지는 주체(GraphProcessor)가 누군지 명확히 할 것. (setter 추가 X)
-        
 
         public void OpenSignalAddDialog()
         {
@@ -112,7 +124,7 @@ namespace OxyTest.ViewModels
 
         private void OnTestClick()
         {
-            GraphCore.DataSlotManager.CreateNewSlot(GraphCore.GraphProcessor.LastEventTime);
+            //GraphCore.DataSlotManager.CreateNewSlot(GraphCore.GraphProcessor.LastEventTime);
         }
     }
 }

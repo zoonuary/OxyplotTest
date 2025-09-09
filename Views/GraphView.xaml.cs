@@ -61,11 +61,5 @@ namespace OxyTest.Views
 			GridViewContainer.Children.Add(gridview);
 			return viewmodel;
 		}
-
-        private void PopupMenu_Closed(object sender, EventArgs e)
-        {
-			LabelSplitCheckItem.IsChecked = false;
-			ViewTypeSplitCheckItem.IsChecked = false;
-		}
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OxyTest.Events
@@ -12,14 +13,19 @@ namespace OxyTest.Events
     {
         public EventDispatcher() { }
 
-        public void Request_PastData(object sender, PastDataRequestArgs pastData)
+        public void Request_PastData(object sender, PastDataRequestArgs args)
         {
-            EventHandlerManager.Default.Send("PastDataReq", this, pastData);
+            EventHandlerManager.Default.Send("PastDataReq", sender, args);
         }
 
-        public void Request_DataRange(object sender, DataRangeRequestArgs rangeRequestArgs)
+        public void Request_DataRange(object sender, DataRangeRequestArgs args)
         {
-            EventHandlerManager.Default.Send("DataRangeReq", this, rangeRequestArgs);
+            EventHandlerManager.Default.Send("DataRangeReq", sender, args);
+        }
+
+        public void Request_TimeRangeData(object sender, TimeRangeEventArgs args)
+        {
+            EventHandlerManager.Default.Send("TimeRangeReq", sender, args);
         }
     }
 }

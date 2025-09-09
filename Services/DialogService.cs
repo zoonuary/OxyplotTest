@@ -27,10 +27,14 @@ namespace OxyTest.Services
 	{
 		[DllImport("user32.dll")]
 		public static extern bool GetWindowRect(IntPtr hwnd, ref RECT lpRect);
+		
+		private RandomColors RandomColors { get; }
 		private Visual MainVisual { get; }
 
-		public DialogService(Visual visual)
+
+		public DialogService(RandomColors randomColors, Visual visual)
 		{
+			RandomColors = randomColors;
 			MainVisual = visual;
 		}
 
@@ -72,7 +76,7 @@ namespace OxyTest.Services
 					);
 
 				//파싱 완료된 모델을 담아 함수 실행
-				callbackAction?.Invoke(new GraphModel(signalData));
+				callbackAction?.Invoke(new GraphModel(signalData, RandomColors.GetNextColor()));
 			});
 			ShowDialogCenterdOn(dialog);
 		}

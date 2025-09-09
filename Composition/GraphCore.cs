@@ -19,23 +19,26 @@ namespace OxyTest.Composition
 	{
 		public Visual MainVisual { get; }
 		public Dispatcher Dispatcher { get; } 
-
 		public GraphData GraphData { get; }
 		public GraphProcessor GraphProcessor { get; }
 		public DialogService DialogService { get; }
 		public EventDispatcher EventDispatcher { get; }
-		public DataSlotManager DataSlotManager { get; }
-
+		public GraphEventHandler GraphEventHandler { get; }
+		public DataChunkManager DataChunkManager { get; }
+		public RandomColors RandomColors { get; }
 		public GraphCore(Visual visual)
 		{
 			MainVisual = visual;
 			Dispatcher = MainVisual.Dispatcher;
 
+			RandomColors = new RandomColors();
 			GraphData = new GraphData();
 			EventDispatcher = new EventDispatcher();
-			DataSlotManager = new DataSlotManager(EventDispatcher, GraphData);
-			GraphProcessor = new GraphProcessor(GraphData, Dispatcher, DataSlotManager);
-			DialogService = new DialogService(MainVisual);
+			GraphEventHandler = new GraphEventHandler(GraphData, Dispatcher);
+			GraphProcessor = new GraphProcessor(GraphData);
+			DialogService = new DialogService(RandomColors, MainVisual);
+			DataChunkManager = new DataChunkManager(GraphData, EventDispatcher, GraphEventHandler);
+			
 		}
 	}
 }

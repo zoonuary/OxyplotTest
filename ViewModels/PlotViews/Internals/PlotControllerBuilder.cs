@@ -1,16 +1,15 @@
 ﻿using OxyPlot;
-using OxyPlot.Annotations;
+using OxyPlot.Axes;
 using OxyTest.Composition;
 using OxyTest.Data;
 using OxyTest.Events;
 using OxyTest.Models.Event;
+using OxyTest.Models.Graph;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls.Primitives;
 
 namespace OxyTest.ViewModels.PlotViews.Internals
 {
@@ -23,7 +22,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
         private IViewCommand<OxyMouseDownEventArgs> ShowTracker { get; set; }
         private IViewCommand<OxyMouseWheelEventArgs> ZoomWheel { get; set; }
         public PlotModel PlotModel { get; set; }
-
+        public ViewPortInfo ViewPortInfo { get; set; }
         private PlotPopupHelper PlotPopupHelper { get; }
 
         public PlotControllerBuilder(GraphCore graphCore, CursorManager cursorManager)
@@ -36,7 +35,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
 
             multiAxisPanManipulateCommand = new DelegatePlotCommand<OxyMouseDownEventArgs>((view, ctrl, args) =>
             {
-                ctrl.AddMouseManipulator(view, new MultiAxisPanManipulator(view, GraphData.PageType, GraphData.Xaxis_isSyncMode, graphCore.GraphProcessor.eLOCAL_STATUS, graphCore.GraphData.InstanceID), args);
+                ctrl.AddMouseManipulator(view, new MultiAxisPanManipulator(view, GraphData), args);
             });
 
             ShowTracker = new DelegatePlotCommand<OxyMouseDownEventArgs>((view, ctrl, args) =>
@@ -47,8 +46,9 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             ZoomWheel = new DelegatePlotCommand<OxyMouseWheelEventArgs>((view, ctrl, args) =>
             {
                 double factor = 1;
-                var manipulator = new ZoomStepManipulator(view, GraphData.PageType, GraphData, graphCore.GraphProcessor.eLOCAL_STATUS, graphCore.GraphData.InstanceID) { Step = args.Delta * 0.001 * factor };
+                var manipulator = new ZoomStepManipulator(view, GraphData.PageType, GraphData, graphCore.GraphData.eLOCAL_STATUS, graphCore.GraphData.InstanceID) { Step = args.Delta * 0.001 * factor };
                 manipulator.Started(args);
+                SetViewPortInfo(view.ActualModel.Axes.FirstOrDefault(axis => axis.IsHorizontal()));
             });
         }
 
@@ -64,6 +64,23 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             PlotController.BindMouseDown(OxyMouseButton.Middle, new DelegatePlotCommand<OxyMouseDownEventArgs>((view, ctrl, args) => { HandelMiddleButtonDown(args); }));
             PlotController.BindMouseDown(OxyMouseButton.Middle, OxyModifierKeys.Control, new DelegatePlotCommand<OxyMouseDownEventArgs>((view, ctrl, args) => { HandleCtrlMiddleButtonDown(args); }));
             return PlotController;
+        }
+
+        public void SetViewPortInfo(Axis? xaxis)
+        {
+            if (PlotModel == null || xaxis == null)
+            {
+                ViewPortInfo = new ViewPortInfo(0, 0, 0, new OxyRect());
+                return;
+            }
+
+            double min = xaxis.ActualMinimum;
+            double max = xaxis.ActualMaximum;
+
+            var area = PlotModel.PlotArea;
+            int dip = (int)Math.Round(area.Width);
+
+            ViewPortInfo = new ViewPortInfo(min, max, dip, area);
         }
 
         public void OnMeasureCursorMove(double xPosition)
@@ -87,15 +104,16 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             {
                 double transformedX = PlotModel.DefaultXAxis.InverseTransform(args.Position.X);
                 CursorManager.SetTargetX(transformedX);
-                foreach(var model in GraphData.Graphs)
+                foreach (var model in GraphData.Graphs)
                 {
                     model.YTime = transformedX;
                     model.Y = model.GetNearestValue(transformedX);
 
                     double pivotX = CursorManager.PivotXPosition;
                     model.dYTime = model.YTime - pivotX;
+
                     model.dY = model.Y - model.GetNearestValue(pivotX);
-                } 
+                }
             }
             PlotModel.InvalidatePlot(false);
             args.Handled = true;
@@ -108,7 +126,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
                 double transformedX = PlotModel.DefaultXAxis.InverseTransform(args.Position.X);
                 CursorManager.SetPivotX(transformedX);
 
-                foreach(var model in GraphData.Graphs)
+                foreach (var model in GraphData.Graphs)
                 {
                     double pivotX = CursorManager.PivotXPosition;
                     model.dYTime = model.YTime - pivotX;
@@ -127,14 +145,26 @@ namespace OxyTest.ViewModels.PlotViews.Internals
         private bool IsSyncMode { get; }
         private eLOCAL_STATUS LocalStatus { get; }
         private object InstanceID { get; }
-        public MultiAxisPanManipulator(IPlotView view, ePAGE_TYPE pageType, bool isSyncMode, eLOCAL_STATUS localstatus, object instanceID) : base(view)
+        private GraphData GraphData { get; }
+        //public MultiAxisPanManipulator(IPlotView view, ePAGE_TYPE pageType, bool isSyncMode, eLOCAL_STATUS localstatus, object instanceID) : base(view)
+        //{
+        //    View = view;
+        //    PageType = pageType;
+        //    IsSyncMode = isSyncMode;
+        //    LocalStatus = localstatus;
+        //    InstanceID = instanceID;
+        //}
+
+        public MultiAxisPanManipulator(IPlotView view, GraphData graphData) : base(view)
         {
             View = view;
-            PageType = pageType;
-            IsSyncMode = isSyncMode;
-            LocalStatus = localstatus;
-            InstanceID = instanceID;
+            GraphData = graphData;
+            PageType = graphData.PageType;
+            IsSyncMode = graphData.Xaxis_isSyncMode;
+            LocalStatus = graphData.eLOCAL_STATUS;
+            InstanceID = graphData.InstanceID;
         }
+
 
         private ScreenPoint PreviousPosition { get; set; }
 
@@ -152,6 +182,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             e.Handled = true;
         }
 
+
         public override void Delta(OxyMouseEventArgs e)
         {
             base.Delta(e);
@@ -167,7 +198,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
                 if (IsSyncMode)
                 {
                     var eventData = new GraphSyncEventModel(InstanceID, XAxis.ActualMinimum, XAxis.ActualMaximum);
-                    LocalBroadCaster.BroadCast(eventData);
+                    LocalBroadCaster.Instance.BroadCast(eventData);
                 }
             }
 
@@ -210,12 +241,16 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             }
             else
             {
-                if(PageType == ePAGE_TYPE.MULTIPLE_Y)
+                if (PageType == ePAGE_TYPE.MULTIPLE_Y)
                 {
                     foreach (var axis in this.PlotView.ActualModel.Axes)
                     {
-                        if (axis.IsHorizontal()) this.XAxis = axis;
-                        if (axis.IsVertical() && axis.PositionTier == 0) 
+                        if (axis.IsHorizontal())
+                        {
+                            this.XAxis = axis;
+                        }
+
+                        if (axis.IsVertical() && axis.PositionTier == 0)
                         {
                             this.YAxis = axis;
                             break;
@@ -249,10 +284,12 @@ namespace OxyTest.ViewModels.PlotViews.Internals
         {
             PageType = pageType;
             IsSyncMode = graphData.Xaxis_isSyncMode;
-            Maxrange = graphData.Xaxis_DefaultFitRange;
+            Maxrange = graphData.DataChunkSize;
             LocalStatus = localstatus;
             InstanceID = instanceid;
         }
+
+
 
         public bool FineControl { get; set; }
         public double Step { get; set; }
@@ -277,7 +314,7 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             }
             else
             {
-                if(PageType == ePAGE_TYPE.MULTIPLE_Y)
+                if (PageType == ePAGE_TYPE.MULTIPLE_Y)
                 {
                     foreach (var axis in this.PlotView.ActualModel.Axes)
                     {
@@ -291,7 +328,9 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             }
 
             if (!((this.XAxis != null && this.XAxis.IsZoomEnabled) || (this.YAxis != null && this.YAxis.IsZoomEnabled)))
+            {
                 return;
+            }
 
             var current = this.InverseTransform(e.Position.X, e.Position.Y);
             if (Step > 0)
@@ -306,8 +345,8 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             if (this.XAxis != null
                 && LocalStatus != eLOCAL_STATUS.LIVEUPDATE)
             {
-                
-                if(((XAxis.ActualMaximum - XAxis.ActualMinimum) / Step) <= Maxrange)
+
+                if (((XAxis.ActualMaximum - XAxis.ActualMinimum) / Step) <= Maxrange)
                 {
                     this.XAxis.ZoomAt(Step, current.X);
                 }
@@ -321,22 +360,40 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             if (this.YAxis != null)
             {
                 this.YAxis.ZoomAt(Step, current.Y);
-                if(PageType == ePAGE_TYPE.SINGLE_Y)
+                if (PageType == ePAGE_TYPE.SINGLE_Y)
                 {
-                    foreach(var axis in PlotView.ActualModel.Axes)
+                    foreach (var axis in PlotView.ActualModel.Axes)
                     {
                         if (axis.IsVertical())
                         {
-                            axis.ZoomAt(Step, current.Y);
+                            axis.Zoom(this.YAxis.ActualMinimum, this.YAxis.ActualMaximum);
                         }
                     }
                 }
             }
 
+            //if (this.YAxis != null)
+            //{
+            //    this.YAxis.Pan(this.PreviousPosition, e.Position);
+            //    if (PageType == ePAGE_TYPE.SINGLE_Y)
+            //    {
+            //        foreach (var axis in PlotView.ActualModel.Axes)
+            //        {
+            //            if (axis.IsVertical())
+            //            {
+            //                //axis.Pan(this.PreviousPosition, e.Position);
+            //                axis.Zoom(YAxis.ActualMinimum, YAxis.ActualMaximum);
+            //            }
+            //        }
+            //    }
+
+            //}
+
+
             if (IsSyncMode)
             {
                 var eventData = new GraphSyncEventModel(InstanceID, XAxis.ActualMinimum, XAxis.ActualMaximum);
-                LocalBroadCaster.BroadCast(eventData);
+                LocalBroadCaster.Instance.BroadCast(eventData);
             }
 
             this.PlotView.InvalidatePlot(false);
@@ -369,9 +426,20 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             e.Handled = true;
 
             var plotView = base.PlotView as FrameworkElement;
-            if (plotView == null) return;
-            if (PlotView.ActualModel == null) return;
-            if (!PlotView.ActualModel.PlotArea.Contains(e.Position.X, e.Position.Y)) return;
+            if (plotView == null)
+            {
+                return;
+            }
+
+            if (PlotView.ActualModel == null)
+            {
+                return;
+            }
+
+            if (!PlotView.ActualModel.PlotArea.Contains(e.Position.X, e.Position.Y))
+            {
+                return;
+            }
 
             var screenPoint = plotView.PointToScreen(new Point(e.Position.X, e.Position.Y));
             List<CursorData> data = new List<CursorData>();

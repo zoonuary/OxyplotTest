@@ -41,21 +41,21 @@
 										  ToolTipService.ShowOnDisabled="True"
 										  IsEnabled="{Binding DataContext.GraphData.PlayMode, IsChecked="{Binding LocalStatus, Converter={StaticResource LocalStatusToBooleanConverter}}"
 														RelativeSource={RelativeSource AncestorType=UserControl}, 
-														Converter={StaticResource PlayModeToEnabledConverter}}"/>-->
+														Converter={StaticResource PlayModeToEnabledConverter}}"/>
+                        
+                        IsEnabled="{Binding GraphCore.GraphData.eLOCAL_STATUS, Converter={StaticResource StartButtonEnableControlConverter}, Mode=OneWay}"-->
 
                         <dxb:BarCheckItem Content="Start" 
                                           ToolTip="Start Updating Graph"
                                           GroupIndex="0"
                                           Command="{Binding CMD_START}"
-                                          IsChecked="{Binding LocalStatus, Converter={StaticResource LocalStatusToBooleanConverter}, Mode=OneWay}"
-                                          IsEnabled="{Binding LocalStatus, Converter={StaticResource StartButtonEnableControlConverter}}"/>
+                                          IsChecked="{Binding GraphCore.GraphData.eLOCAL_STATUS, Converter={StaticResource LocalStatusToBooleanConverter}, Mode=OneWay}"
+                                          />
                                           
                         <dxb:BarCheckItem Content="Stop" 
                                           ToolTip="Stop Updating Graph"
                                           GroupIndex="0"
-                                          Command="{Binding CMD_STOP}"
-                                          
-                                          IsEnabled="{Binding LocalStatus, Converter={StaticResource StartButtonEnableControlConverter}}"/>
+                                          Command="{Binding CMD_STOP}"/>
                                           
                         <dxb:BarButtonItem Content="clear"/>
 
@@ -70,20 +70,23 @@
 
                         <dxb:BarItemLinkSeparator/>
 
-                        <dxb:BarSplitCheckItem Content="ViewType" ActAsDropDown="True" AllowUncheckInGroup="False" x:Name="ViewTypeSplitCheckItem">
-                            <dxb:PopupMenu Closed="PopupMenu_Closed">
+                        
+                        
+                        
+                        <dxb:BarSplitButtonItem Content="ViewType" ActAsDropDown="True" x:Name="ViewTypeSplitCheckItem">
+                            <dxb:PopupMenu>
                                 <dxb:BarCheckItem Content="Single Y" GroupIndex="1" IsChecked="{Binding PageType,Converter={StaticResource PageTypeToBoolConverter}, ConverterParameter=SINGLE_Y, Mode=TwoWay}"/>
                                 <dxb:BarCheckItem Content="Multiple Y" GroupIndex="1" IsChecked="{Binding PageType,Converter={StaticResource PageTypeToBoolConverter}, ConverterParameter=MULTIPLE_Y, Mode=TwoWay}"/>
                                 <dxb:BarCheckItem Content="Separate Y" GroupIndex="1" IsChecked="{Binding PageType,Converter={StaticResource PageTypeToBoolConverter}, ConverterParameter=SEPARATE_Y, Mode=TwoWay}"/>
                             </dxb:PopupMenu>
-                        </dxb:BarSplitCheckItem>
+                        </dxb:BarSplitButtonItem>
 
-                        <dxb:BarSplitCheckItem Content="Label" ActAsDropDown="True" x:Name="LabelSplitCheckItem">
-                            <dxb:PopupMenu Closed="PopupMenu_Closed">
+                        <dxb:BarSplitButtonItem Content="Label" ActAsDropDown="True" x:Name="LabelSplitCheckItem">
+                            <dxb:PopupMenu>
                                 <dxb:BarCheckItem Content="X-Axis" IsChecked="{Binding GraphCore.GraphData.Xaxis_LabelVisible, Mode=TwoWay}"/>
                                 <dxb:BarCheckItem Content="Y-Axis" IsChecked="{Binding GraphCore.GraphData.Yaxis_LabelVisible, Mode=TwoWay}"/>
                             </dxb:PopupMenu>
-                        </dxb:BarSplitCheckItem>
+                        </dxb:BarSplitButtonItem>
 
                         <dxb:BarCheckItem Content="GridLineVisible" IsChecked="{Binding GraphCore.GraphData.GridLineVisible, Mode=TwoWay}"/>
 

@@ -11,6 +11,6 @@
     <ViewModels:PlotViewModel/>
 </UserControl.DataContext>-->
     <Grid>
-        <oxy:PlotView x:Name="plotview" Model="{Binding PlotModel}" Controller="{Binding PlotController}"/>
+        <oxy:PlotView x:Name="plotview" Model="{Binding PlotModel}" Controller="{Binding PlotController}" SizeChanged="plotview_SizeChanged"/>
     </Grid>
 </UserControl>

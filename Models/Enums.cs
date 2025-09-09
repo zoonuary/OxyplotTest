@@ -13,7 +13,7 @@ namespace OxyTest
 		STOP,
 		CLEAR,
 		ONEVENT,
-		DBC_UPDATED
+		DBC_UPDATED,
 	}
 
 	public enum eLOCAL_STATUS
@@ -51,4 +51,5 @@ namespace OxyTest
 		RAW,
 		PHYSICAL,
 	}
+
 }

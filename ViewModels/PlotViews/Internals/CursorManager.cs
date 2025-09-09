@@ -30,7 +30,6 @@ namespace OxyTest.ViewModels.PlotViews.Internals
             MeasureLines.Add(MeasureCursor);
             PivotLines.Add(PivotCursor);
             TargetLines.Add(TargetCursor);
-
         }
 
         private LineAnnotation MeasureCursor { get; set; }

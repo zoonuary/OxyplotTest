@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OxyTest.Data
@@ -42,10 +43,33 @@ namespace OxyTest.Data
 
 			Xaxis_DefaultRange = 10.0;
 			Xaxis_DefualtMargin = 2.0;
-			Xaxis_DefaultFitRange = 300.0;
+			DataChunkSize = 30.0;
+
+			RequestOffset = 2.0;//datarequest시 좌우로 얼마나 더 그릴지 판단
         }
 
 		public object InstanceID { get; } = Guid.NewGuid();
+
+		private eLOCAL_STATUS local_status = eLOCAL_STATUS.STOPPED;
+		public eLOCAL_STATUS eLOCAL_STATUS
+		{
+			get => local_status;
+			set
+			{
+				if (local_status != value)
+				{
+					local_status = value;
+					NotifyPropertyChanged(nameof(eLOCAL_STATUS));
+				}
+			}
+		}
+
+		private double lastEventTime = 0.0;
+		public double LastEventTime
+        {
+			get => Volatile.Read(ref lastEventTime);
+			set => Interlocked.Exchange(ref lastEventTime, value);
+        }
 
 		private ePAGE_TYPE pageType;
 		public ePAGE_TYPE PageType
@@ -144,7 +168,9 @@ namespace OxyTest.Data
 
 		public double Xaxis_DefualtMargin { get; private set; } // fit기능이 눌려지지 않았을때, Graph의 마지막 시간과 xaxis의 마지막 시간 차이(0 인 경우, 그래프가 plotarea 위 마지막까지 그려짐)
 
-		public double Xaxis_DefaultFitRange { get; private set; } //기본 300초, Fit 시 5분 기준으로 보여줌 
+		public double DataChunkSize { get; private set; }
+
+		public double RequestOffset { get; private set; }
 
 		private bool gridLineVisible;
 		public bool GridLineVisible

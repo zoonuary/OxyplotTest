@@ -1,20 +1,19 @@
 ﻿using DevExpress.Mvvm;
 using OxyPlot;
-using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyTest.Composition;
 using OxyTest.Data;
-using OxyTest.Events;
 using OxyTest.Models.Event;
 using OxyTest.Models.Graph;
-using OxyTest.Services;
 using OxyTest.ViewModels.PlotViews.Internals;
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace OxyTest.ViewModels
 {
@@ -45,68 +44,43 @@ namespace OxyTest.ViewModels
             PlotController = PlotControllerBuilder.SetController(PlotModel);
 
             //update 등록
-            GraphCore.GraphProcessor.RegisterCallbackAction(UpdatePlotModel);
-
+            GraphCore.GraphProcessor.RegisterCallbackAction_Render(UpdatePlotModel);
+            GraphCore.GraphEventHandler.RegisterCallbackAction_Clear(UpdatePlotModel);
 
             //동기화 등록
-            GraphCore.GraphProcessor.RegiscatCalbackAction_GraphSync(UpdateSync);
+            GraphCore.GraphEventHandler.RegisterCallbackAction_GraphSync(UpdateSync);
 
-            
             GraphData.Graphs_CollectionChanged += OnGraphCollectionChanged;
-            GraphData.PropertyChanged += (s, e) =>
-            {
-                switch (e.PropertyName)
-                {
-                    case nameof(GraphData.SelectedModel): //선택된 item(model) 변경 시 알림
-                        OnSelectedModelChanged(GraphData.SelectedModel);
-                        break;
-                    case nameof(GraphData.PageType):
-                        PageType = GraphData.PageType;
-                        break;
-                    case nameof(GraphData.CursorType):
-                        CursorType = GraphData.CursorType;
-                        break;
-                    case nameof(GraphData.Yaxis_LabelVisible):
-                        PlotModel.InvalidatePlot(false);
-                        break;
-                    case nameof(GraphData.Xaxis_LabelVisible):
-                        if (GraphData.Xaxis_LabelVisible)
-                            XAxis.Title = XAxis_Title;
-                        else
-                            XAxis.Title = string.Empty;
-                        PlotModel.InvalidatePlot(false);
-                        break;
-                    case nameof(GraphData.GridLineVisible):
-                        if (GraphData.GridLineVisible)
-                        {
-                            XAxis.MajorGridlineStyle = LineStyle.Solid;
-                            XAxis.MinorGridlineStyle = LineStyle.Dot;
-                        }
-                        else
-                        {
-                            XAxis.MajorGridlineStyle = LineStyle.None;
-                            XAxis.MinorGridlineStyle = LineStyle.None;
-                        }
-                        PlotModel.InvalidatePlot(false);
-                        break;
-                    case nameof(GraphData.Xaxis_isFitMode):
-                        if (GraphData.Xaxis_isFitMode)
-                        {
-                            UpdatePlotModel(GraphCore.GraphProcessor.LastEventTime);
-                        }
-                        break;
-                }
-            };
+            GraphData.PropertyChanged += OnGraphDataPropertyCHanged;
 
-            XAxis.AxisChanged += (s, e) =>
-            {
-                foreach (var graph in GraphData.Graphs)
-                {
-                    graph.UpdatePlotData(XAxis);
-                }
-            };
+            XAxis.AxisChanged += (s, e) => { PlotControllerBuilder.SetViewPortInfo(XAxis); OnAxisChanged(); };
+            graphCore.DataChunkManager.ChunkUpdated += OnChunkLoaded;
+            //XAxis.AxisChanged += async (s, e) =>
+            //{
+            //    //ViewPortInfo viewPortInfo = PlotControllerBuilder.ViewPortInfo;
+            //    PlotControllerBuilder.SetViewPortInfo(XAxis);
 
-            //GraphCore.GraphProcessor.RegisterCallbackAction_LocalStatusChanged(OnLocalStatusChanged);
+            //    double snapMin = PlotControllerBuilder.ViewPortInfo.OffsetMin;
+            //    double snapMax = PlotControllerBuilder.ViewPortInfo.OffsetMax;
+                
+            //    foreach (var graph in GraphData.Graphs)
+            //    {
+            //        graph.UpdatePlotData(PlotControllerBuilder.ViewPortInfo, GraphData.eLOCAL_STATUS);
+            //        //graph.UpdatePlotData(GraphData.RequestOffset, viewPortInfo, GraphData.eLOCAL_STATUS);//확대했을때 좌우 끊김 현상을 방지하기위해 좌우로 좀 더 가져옴
+            //    }
+
+            //    if (GraphData.eLOCAL_STATUS == eLOCAL_STATUS.PAUSED || GraphData.eLOCAL_STATUS == eLOCAL_STATUS.STOPPED)
+            //    {
+            //        var task = await GraphCore.DataChunkManager.EnsureChunkLoadedAsync(snapMin, snapMax);
+            //        if (task)
+            //        {
+            //            foreach(var graph in GraphData.Graphs)
+            //            {
+            //                graph.UpdatePlotData(PlotControllerBuilder.ViewPortInfo, GraphData.eLOCAL_STATUS);
+            //            }
+            //        }
+            //    }
+            //};
         }
 
         private string XAxis_Title { get; } = "Time(s)";
@@ -140,13 +114,16 @@ namespace OxyTest.ViewModels
             }
             set
             {
-                if(cursorType != value)
+                if (cursorType != value)
                 {
                     cursorType = value;
                     SetCursor();
                 }
             }
         }
+
+        private bool isRenderPending = false;
+
 
         private void SetDefaultAxis(PlotModel model)
         {
@@ -157,26 +134,16 @@ namespace OxyTest.ViewModels
             XAxis.MinorGridlineStyle = LineStyle.Dot;
             XAxis.MajorGridlineColor = OxyColor.FromAColor(64, OxyColors.Black);
             XAxis.MinorGridlineColor = OxyColor.FromAColor(32, OxyColors.Black);
-            XAxis.Zoom(0, 10);
-
+            XAxis.MinimumRange = 0.001;
             XAxis.AbsoluteMinimum = 0.0;
-
+            XAxis.Zoom(0, 10);
             model.Axes.Add(XAxis);
-            //var yaxis = new LinearAxis
-            //{
-            //    Position = AxisPosition.Left,
-            //    MajorGridlineStyle = LineStyle.Solid,
-            //    MinorGridlineStyle = LineStyle.Dot,
-            //    MajorGridlineColor = OxyColor.FromAColor(64, OxyColors.Black),
-            //    MinorGridlineColor = OxyColor.FromAColor(32, OxyColors.Black)
-            //};
-            //yaxis.Zoom(0, 10);
-            //model.Axes.Add(yaxis); //성능 문제로 제거
         }
 
-        private void UpdatePlotModel(double lastTime)
+        private void UpdatePlotModel()
         {
             PlotModel.Series.Clear();
+            double lastTime = GraphData.LastEventTime;
             //double lastTime = 0.0;
 
             //foreach (var graphModel in GraphCore.GraphData.Graphs)
@@ -191,23 +158,26 @@ namespace OxyTest.ViewModels
 
             if (GraphData.Xaxis_isFitMode)
             {
-                var range = GraphData.Xaxis_DefaultFitRange;
-                if (lastTime <= range) 
-                { 
+                var range = GraphData.DataChunkSize;
+                if (lastTime <= range)
+                {
                     XAxis.Zoom(0, lastTime);
                 }
                 else
                 {
                     XAxis.Zoom(lastTime - range, lastTime);
+                    PlotControllerBuilder.SetViewPortInfo(XAxis);
                 }
             }
             else
             {
                 var range = GraphData.Xaxis_DefaultRange;
                 var margin = GraphData.Xaxis_DefualtMargin;
-                if(lastTime > (range - margin))
+                if (lastTime > (range - margin))
                 {
-                    XAxis.Zoom(lastTime - range, lastTime + margin);
+                    var renderlast = lastTime + margin;
+                    XAxis.Zoom(renderlast - range, renderlast);
+                    PlotControllerBuilder.SetViewPortInfo(XAxis);
                 }
                 else
                 {
@@ -215,9 +185,12 @@ namespace OxyTest.ViewModels
                 }
             }
 
+            var snapStart = XAxis.ActualMinimum;
+            var snapEnd = XAxis.ActualMaximum;
             foreach (var graph in GraphData.Graphs)
             {
-                graph.UpdatePlotData(XAxis);
+                graph.UpdatePlotData(PlotControllerBuilder.ViewPortInfo);
+                //graph.UpdatePlotData(GraphData.RequestOffset, XAxis);
                 PlotModel.Series.Add(graph.GraphRenderModel.CurrentSeries);
             }
 
@@ -226,11 +199,68 @@ namespace OxyTest.ViewModels
 
         private void UpdateSync(GraphSyncEventModel model)
         {
-            if(model.Xaxis_ActualMaximum != XAxis.ActualMaximum
+            if (model.Xaxis_ActualMaximum != XAxis.ActualMaximum
                 && model.Xaxis_ActualMinimum != XAxis.ActualMinimum)
             {
                 XAxis.Zoom(model.Xaxis_ActualMinimum, model.Xaxis_ActualMaximum);
                 PlotModel.InvalidatePlot(false);
+            }
+        }
+
+        private void OnGraphDataPropertyCHanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(GraphData.SelectedModel): //선택된 item(model) 변경 시 알림
+                    OnSelectedModelChanged(GraphData.SelectedModel);
+                    break;
+                case nameof(GraphData.PageType):
+                    PageType = GraphData.PageType;
+                    break;
+                case nameof(GraphData.CursorType):
+                    CursorType = GraphData.CursorType;
+                    break;
+                case nameof(GraphData.Yaxis_LabelVisible):
+                    PlotModel.InvalidatePlot(false);
+                    break;
+                case nameof(GraphData.Xaxis_LabelVisible):
+                    if (GraphData.Xaxis_LabelVisible)
+                    {
+                        XAxis.Title = XAxis_Title;
+                    }
+                    else
+                    {
+                        XAxis.Title = string.Empty;
+                    }
+
+                    PlotModel.InvalidatePlot(false);
+                    break;
+                case nameof(GraphData.GridLineVisible):
+                    if (GraphData.GridLineVisible)
+                    {
+                        XAxis.MajorGridlineStyle = LineStyle.Solid;
+                        XAxis.MinorGridlineStyle = LineStyle.Dot;
+                    }
+                    else
+                    {
+                        XAxis.MajorGridlineStyle = LineStyle.None;
+                        XAxis.MinorGridlineStyle = LineStyle.None;
+                    }
+                    PlotModel.InvalidatePlot(false);
+                    break;
+                case nameof(GraphData.Xaxis_isFitMode):
+                    if (GraphData.Xaxis_isFitMode)
+                    {
+                        UpdatePlotModel();
+                    }
+                    break;
+                case nameof(GraphData.eLOCAL_STATUS):
+                    if (GraphData.eLOCAL_STATUS == eLOCAL_STATUS.PAUSED || GraphData.eLOCAL_STATUS == eLOCAL_STATUS.STOPPED)
+                    {
+                        GraphCore.DataChunkManager.OnLocalStatus_paused(GraphData.DataChunkSize, GraphData.LastEventTime, PlotControllerBuilder.ViewPortInfo);
+                        PlotModel.InvalidatePlot(true);
+                    }
+                    break;
             }
         }
 
@@ -249,7 +279,7 @@ namespace OxyTest.ViewModels
 
             //data 추가
             PlotModel.Series.Clear();
-            foreach(var graphModel in Graphs)
+            foreach (var graphModel in Graphs)
             {
                 var renderModel = graphModel.GraphRenderModel;
                 PlotModel.Series.Add(renderModel.CurrentSeries);
@@ -263,9 +293,16 @@ namespace OxyTest.ViewModels
 
         private void OnSelectedModelChanged(GraphModel SelectedItem)
         {
-            if (SelectedItem == null) return;
+            if (SelectedItem == null)
+            {
+                return;
+            }
             //기존 item의 이벤트 제거 및 새 item 이벤트 추가
-            if(CurrentItem.GraphRenderModel != null) CurrentItem.GraphRenderModel.PropertyChanged -= OnRenderModelChanged;
+            if (CurrentItem.GraphRenderModel != null)
+            {
+                CurrentItem.GraphRenderModel.PropertyChanged -= OnRenderModelChanged;
+            }
+
             CurrentItem = SelectedItem;
             CurrentItem.GraphRenderModel.PropertyChanged += OnRenderModelChanged;
 
@@ -274,6 +311,13 @@ namespace OxyTest.ViewModels
 
             //page type 에 따른 view 분기처리
             LayoutManager.SetLayout(PageType, CurrentItem);
+
+            ////최상단으로 올려주기
+            //if (GraphData.RemoveGraph(CurrentItem))
+            //    GraphData.AddGraph(CurrentItem);
+
+
+
             PlotModel.InvalidatePlot(true);
         }
 
@@ -287,7 +331,11 @@ namespace OxyTest.ViewModels
                         {
                             var baseColor = CurrentItem.GraphRenderModel.BaseColor;
                             var yaxis = PlotModel.Axes.FirstOrDefault(x => x.Tag == CurrentItem.Tag);
-                            if (yaxis != null) ChangeAxisColor((LinearAxis)yaxis, baseColor);
+                            if (yaxis != null)
+                            {
+                                ChangeAxisColor((LinearAxis)yaxis, baseColor);
+                            }
+
                             ChangeAxisColor(XAxis, baseColor);
                         }
                         break;
@@ -298,7 +346,7 @@ namespace OxyTest.ViewModels
                         break;
                     case nameof(GraphRenderModel.Visible):
                         {
-                            if(PageType == ePAGE_TYPE.SEPARATE_Y)
+                            if (PageType == ePAGE_TYPE.SEPARATE_Y)
                             {
                                 LayoutManager.SetLayout(PageType, CurrentItem); //separate의 경우 하나 안 보일때마다 YAxis 높이 다시계산
                             }
@@ -319,6 +367,42 @@ namespace OxyTest.ViewModels
             }
         }
 
+        private void OnAxisChanged()
+        {
+            if (isRenderPending) return;
+            isRenderPending = true; //frame 마다 1회만 호출하도록 제어하는 토글
+            GraphCore.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                isRenderPending = false;
+                var viewport = PlotControllerBuilder.ViewPortInfo;
+
+                if (GraphData.eLOCAL_STATUS == eLOCAL_STATUS.PAUSED || GraphData.eLOCAL_STATUS == eLOCAL_STATUS.STOPPED)
+                    GraphCore.DataChunkManager.EnsureCoverage(viewport);
+
+                foreach(var graph in GraphData.Graphs)
+                {
+                    graph.UpdatePlotData(viewport, GraphData.eLOCAL_STATUS);
+                }
+
+                PlotModel.InvalidatePlot(true);
+            }), DispatcherPriority.Render);
+        }
+
+        private void OnChunkLoaded(ViewPortInfo snapshot)
+        {
+            var currentAxisInfo = PlotControllerBuilder.ViewPortInfo;
+            if (currentAxisInfo.XMin > snapshot.XMax || currentAxisInfo.XMax < snapshot.XMin) //로드됐는데 안겹치면 안그림
+                return;
+
+            //OnAxisChanged의 frame당 1회만 호출방식을 유지할거라면 OnAxisChanged를 호출.
+            foreach (var graph in GraphData.Graphs)
+            {
+                graph.UpdatePlotData(currentAxisInfo, GraphData.eLOCAL_STATUS);
+            }
+
+            PlotModel.InvalidatePlot(true);
+        }
+
         private void ChangeAxisColor(LinearAxis axis, Color color)
         {
             byte MinorGridAlpha = 32;
@@ -334,7 +418,7 @@ namespace OxyTest.ViewModels
             //plotmodel색도 맞춰줌
             PlotModel.PlotAreaBorderColor = oxyColor;
             PlotModel.InvalidatePlot(false);
-            
+
         }
 
         private void SetCursor()
